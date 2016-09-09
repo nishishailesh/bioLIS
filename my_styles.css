@@ -1,0 +1,18 @@
+table.style1 {background-color:gray;}
+table.style2 {background-color:lightblue;}
+table.style3 {background-color:lightgreen;}
+form {margin: 0; padding:0;}
+table {border:0px;border-spacing: 0;border-collapse: collapse;}
+table.help {background-color:darksalmon; border:3px solid;}
+
+td.lable1 {background-color:pink;}
+td.lable2 {background-color:lightgray;}
+
+td.button1 {background-color:lightgray;}
+td.button2 {background-color:lightblue;}
+td.button3 {background-color:lightgreen;}
+
+th.head {background-color:lightpink; font-size:1.2em;}
+th.subhead {background-color:lightgray; font-size:1.2em;}
+span.tree {background-color:lightgray;font-size:1.0em;font-weight:bold;color:blue;border: 0px solid red;}
+

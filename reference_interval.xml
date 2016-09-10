@@ -1,10 +1,44 @@
 <Bilirubin>
+<Source>NICE 2016</Source>
 	<Neonate>
-
+		<Age_Unit>hour</Age_Unit>
+		<Bilirubin_Unit>mg/dL</Bilirubin_Unit>
+		<Total_Bilirubin>
+			<age>0</age>
+			<less_than>5.8</less_than>
+		</Total_Bilirubin>
+		<Total_Bilirubin>
+			<age>6</age>
+			<less_than>7.3</less_than>
+		</Total_Bilirubin>
+		<Total_Bilirubin>
+			<age>12</age>
+			<less_than>8.8</less_than>
+		</Total_Bilirubin>
+		<Total_Bilirubin>
+			<age>18</age>
+			<less_than>10.2</less_than>
+		</Total_Bilirubin>
+		<Total_Bilirubin>
+			<age>24</age>
+			<less_than>11.7</less_than>
+		</Total_Bilirubin>
+		<Total_Bilirubin>
+			<age>30</age>
+			<less_than>12.4</less_than>
+		</Total_Bilirubin>
 	</Neonate>
 
 	<Adult>
-	
+		<Total_Bilirubin>
+			<less_than>1.2</less_than>
+		</Total_Bilirubin>
+		<Direct_Bilirubin>
+			<less_than>0.2</less_than>		
+		</Direct_Bilirubin>
+		<Indirect_Bilirubin>
+			<less_than>1.2</less_than>		
+		</Indirect_Bilirubin>
 	</Adult>
 
 </Bilirubin>

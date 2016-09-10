@@ -913,6 +913,22 @@ if($all_array)
 return FALSE;
 }
 
+function get_all_data_of_examination_from_ex_id($id,$sample_id)
+{
+$all_array=get_all_details_of_a_sample($sample_id);
+if($all_array)
+{
+	foreach($all_array as $key=>$value)
+		{
+			if($value['id']==$id)
+			{
+				return $value;
+			}
+		}
+}
+return FALSE;
+}
+
 function get_chronology_of_an_examination($code,$sample_id)
 {
 $chronology=FALSE;
@@ -2247,7 +2263,7 @@ function print_report_pdf_A4($sample_id_array,$doctor)
 }
 
 
-function prepare_ri_str($ex_id)
+function prepare_ri_str($ex_id,$sample_id)
 {
 	$link=start_nchsls();
 	$sql='select reference_interval from scope where id=\''.$ex_id.'\'';
@@ -2257,6 +2273,9 @@ function prepare_ri_str($ex_id)
 	
 	//$xml=simplexml_load_string($ar['reference_interval']) or die("Error: Cannot create object");
 	$xml=simplexml_load_string($ar['reference_interval']);
+	
+	$sample_data=get_all_data_of_examination_from_ex_id($ex_id,$sample_id);
+
 	if($xml===false)
 	{
 		return false;
@@ -2264,11 +2283,15 @@ function prepare_ri_str($ex_id)
 	
 	if($ex_id==1)
 	{
-		glucose_serum_reference_interval($xml);
+		glucose_serum_reference_interval($xml,$sample_data);
 		return true;
 	}
 
-
+	if($ex_id==8 )
+	{
+		bilirubin_serum_reference_interval($xml,$sample_data);
+		return true;
+	}
 }
 
 function print_report_pdf_A4_ri($sample_id_array,$doctor)
@@ -2289,18 +2312,6 @@ function print_report_pdf_A4_ri($sample_id_array,$doctor)
 	$pdf->sample_id_array=$sample_id_array;
 	$pdf->doctor=$doctor;
 	$pdf->login=$_SESSION['login'];
-	//$pdf->SetHeaderMargin(30);
-	//$pdf->SetFooterMargin(30);
-	// set default monospaced font
-	//$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-	//set margins
-	//$pdf->SetMargins(10, 100);
-	//set auto page breaks
-
-	//$pdf->SetAutoPageBreak(TRUE, 30);
-
-	//set image scale factor
-	//$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
 
 	//$pdf->SetFont('times', '', 10);
 	$pdf->SetFont('courier', '', 8);
@@ -2351,17 +2362,21 @@ function print_report_pdf_A4_ri($sample_id_array,$doctor)
 					
 				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
 
-				if(prepare_ri_str($examination_array['id'])===true)
+				if(prepare_ri_str($examination_array['id'],$value)===true)
 				{
-					$counter=$counter+15;
-					$pdf->SetXY(10,$counter);
+
 					//$pdf->Write(0,$GLOBALS['ri_str']);
-					$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+					if(strlen($GLOBALS['ri_str'])>0)
+					{	
+						$counter=$counter+15;
+						$pdf->SetXY(10,$counter);
+						$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+					}
 					$GLOBALS['ri_str']='';	
-				}
-								
-				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+				}	
 				
+				$counter=$pdf->GetY();								
+				//if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
 
 			}
 			else
@@ -2377,7 +2392,11 @@ function print_report_pdf_A4_ri($sample_id_array,$doctor)
 				$pdf->Cell($w=140, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
 				$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
 				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+					
+
 			}
+			
+		
 
 		}
 		
@@ -2387,6 +2406,8 @@ function print_report_pdf_A4_ri($sample_id_array,$doctor)
 			$y=print_attachment_A4($pdf,$pdf->sample_id,$counter);
 			$counter=$y;				
 		}
+		
+
 		
 	}
 	

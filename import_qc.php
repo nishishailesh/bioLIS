@@ -1,4 +1,4 @@
-<?php
+1<?php
 session_start();
 
 
@@ -123,9 +123,7 @@ echo 'uploading from:'.$uploadfile.'<br>';
 					{
 						if 	
 						(
-							(($data[$sample_id_field]>500000000 && $data[$sample_id_field]<599999999))
-							||
-							(($data[$sample_id_field]>800000000 && $data[$sample_id_field]<899999999))
+							$data[$sample_id_field]>100000000 && $data[$sample_id_field]<999999999
 						)
 						{
 							$qc_value=get_target($data[$sample_id_field],$equipment_name,$data[$code_field]);

@@ -4,7 +4,7 @@ session_start();
 //echo '<pre>';
 //print_r($GLOBALS);
 //echo '</pre>';
-
+//$GLOBALS['final_stage']
 include 'common.php';
 
 function import_results_XL_640()
@@ -25,12 +25,18 @@ $uploadfile = $uploaddir . basename($_FILES['import_file']['name']);
 				{
 					if(ctype_digit($data[2]) && is_numeric($data[5]) && $data[5]>0)
 					{
+					//echo get_sample_status($data[2])."---";
+					//print_r($GLOBALS['final_stage']);
+					
+					if(!in_array(get_sample_status($data[2]),$GLOBALS['final_stage']))
+					 {
+
 						///////autoverify with no action
-						//autoverify($data[2],'','no');						
+						//autoverify($data[2],'','no');
 						////////////////////////////////
 						$sql='update examination set result=\''.$data[5].'\' , details=concat(str_to_date(\''.$data[8].'\',\'%m/%d/%Y %H:%i:%S\'),\'|Erba-XL-640\') 
 								where sample_id=\''.$data[2].'\' 
-								and code=\''.$data[4].'\'  
+								and code=\''.$data[4].'\' 
 								and strcmp(substr(result,1,1),\'(\')';
 						//echo '<br>'.$sql;
 						if(!mysql_query($sql,$link)){echo mysql_error();}
@@ -38,26 +44,32 @@ $uploadfile = $uploaddir . basename($_FILES['import_file']['name']);
 						{
 							$affected=mysql_affected_rows($link);
 							$counter=$counter+mysql_affected_rows($link);
-							if(get_sample_status($data[2])!='verified')	//to prevent already verified sample status change
-							{
+							//if(get_sample_status($data[2])!='verified')	//to prevent already verified sample status change
+							//{
 								echo '<br><font color=red>['.$affected.']->'.$data[2].'->'.$data[4].'->'.$data[5].'</font>';
 								change_sample_status($data[2],'analysed');
-							}
+							//}
 						}
+
+					 }
+					else
+					 {
+						echo '<br><font color=green>'.$data[2].':sample_id is released. unrelase to import</font>';
+					 }
 					}
 					else
 					{
-						echo '<br>'.$data[2].':sample_id is not digits or '.$data[5].':result  is not-numeric/0 or less';
+					echo '<br>'.$data[2].':sample_id is not digits or '.$data[5].':result  is not-numeric/0 or less/verified/released';
 					}
 				}
-    		}
+    			}
 			fclose($handle);
 			echo '<h1>Updated data='.$counter.'</h1>';
 		}
 		else
 		{
 			echo 'can not fopen';
-		}	
+		}
 
 }
 

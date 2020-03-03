@@ -114,7 +114,18 @@ function my_radio(id,classs,hiddenn){
    
 }
 
-
+function update_age()
+{
+	y=document.getElementById(\'year\').value;
+	m=document.getElementById(\'month\').value;
+	d=document.getElementById(\'day\').value;
+	yy="";mm="";dd="";
+	if(y.length>0){yy=y+"Y";}else{yy="";}
+	if(m.length>0){mm=m+"M";}else{mm="";}
+	if(d.length>0){dd=d+"D";}else{dd="";}
+	
+	document.getElementById(\'age\').value=yy+mm+dd;
+}
     
     
 </script>';
@@ -271,6 +282,7 @@ function list_department()
 	}
 	echo '</table>';
 }
+
 
 
 function list_sample_details()
@@ -558,10 +570,27 @@ function get_patient_data()
 		echo'				<td>
 								<button type=submit name=action value=insert_new_1 style="font-size:200%;">Submit</button>
 							</td>';
-		
+		//MRD: SUR/'.date("y").'/<input onblur="checkInp(\'mrd\')" type=number id=mrd name=mrd size=10 maxlength=8>
 		echo '</tr>		
 					<tr  style="background:lightpink;">
-						<td colspan=10 >Patient Name: <input  type=text name=name> MRD: SUR/'.date("y").'/<input onblur="checkInp(\'mrd\')" type=number id=mrd name=mrd size=10 maxlength=8></td>
+						<td colspan=10 >
+						Patient Name: <input  type=text name=name> 
+						
+						
+						MRD: <input type=text value=\'SUR/'.date("y").'/\' id=mrd name=mrd 
+										size=13 maxlength=15 
+										pattern="SUR/[0-9][0-9]/[0-9]{8}"
+										title=
+"Correct MRD is SUR/YY/NNNNNNNN
+YY is current year
+NNNNNNNN is 8 digit number"
+							>
+						Sex: <select name=sex><option></option><option>M</option><option>F</option><option>O</option></select>
+						Age: 	Y<input onchange="update_age()" style="width:70px" type=number min=0 max=120 id=year>
+								M<input onchange="update_age()" style="width:50px" type=number min=0 max=12 id=month>
+								D<input onchange="update_age()" style="width:50px" type=number min=0 max=30 id=day>
+								<input type=text readonly id=age name=age>
+						</td>
 					</tr>
 					<tr>';
 		//echo 	'<td style="background:lightgreen;">Department</td>';
@@ -937,7 +966,9 @@ function insert_required_samples($post)
 				$sample_id=confirm_next_sample_id($post['selected_location']);		//new sample_id inserted
 				
 				$sample_array['sample_id']=$sample_id;
-				$sample_array['patient_id']='SUR/'.date("y").'/'.str_pad($post['mrd'],8,'0',STR_PAD_LEFT);
+				$sample_array['sex']=$post['sex'];
+				$sample_array['age']=$post['age'];
+				$sample_array['patient_id']=$post['mrd'];
 				$sample_array['patient_name']=$post['name'];
 				$sample_array['clinician']=$post['selected_department'];
 				$sample_array['unit']=$post['selected_unit'];
@@ -1012,7 +1043,7 @@ if(isset($_POST['action']))
 	{
 			if(	strlen($_POST['name'])==0 				||
 				strlen($_POST['mrd'])==0 				||
-				is_str_digit($_POST['mrd'])==FALSE		|| 
+				//is_str_digit($_POST['mrd'])==FALSE		|| 
 				strlen($_POST['selected_department'])==0||
 				strlen($_POST['selected_unit'])==0 		||
 				strlen($_POST['selected_location'])==0	||
@@ -1027,6 +1058,8 @@ if(isset($_POST['action']))
 		echo '<form method=post>';
 		echo '<table><tr>';
 		echo '<td><input type=text readonly name=name value=\''.$_POST['name'].'\'></td>';
+		echo '<td><input type=text readonly name=sex value=\''.$_POST['sex'].'\'></td>';
+		echo '<td><input type=text readonly name=age value=\''.$_POST['age'].'\'></td>';
 		echo '<td><input type=text readonly name=mrd value=\''.$_POST['mrd'].'\'></td>';
 		echo '<td><input type=text readonly name=selected_department  value=\''.$_POST['selected_department'].'\'></td>';
 		echo '<td><input type=text readonly name=selected_unit value=\''.$_POST['selected_unit'].'\'></td>';
@@ -1056,10 +1089,8 @@ else
 	get_patient_data();
 }
 
-/*
-echo '<pre>';
-print_r($GLOBALS);
-echo '</pre>';
-*/
+
+//echo '<pre>';print_r($_POST);echo '</pre>';
+
 ?>
 

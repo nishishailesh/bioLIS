@@ -2,11 +2,21 @@
 session_start();
 
 
-/*
-echo '<pre>';
-print_r($GLOBALS);
-echo '</pre>';
-*/
+//echo '<pre>';print_r($_POST);echo '</pre>';
+
+echo '<script>
+	function showhide(one) {
+		if(document.getElementById(one).style.display == "none")
+		{
+			document.getElementById(one).style.display = "block";
+		}
+		else
+		{
+			document.getElementById(one).style.display = "none";
+		}
+	}
+
+</script>';
 
 include 'common.php';
 
@@ -42,7 +52,7 @@ for ($i=0;$i<=80;$i++)
 	{
 	if($i==$sd_final)
 		{
-		$str=$str.'<font color=red title=\''.$title.'\'><tt>X</tt></font>';
+		$str=$str.'<font color=red ><tt>X</tt></font>';
 		}
 	else if($i==40)
 		{
@@ -75,14 +85,37 @@ for ($i=0;$i<=80;$i++)
 		//$str=$str.'='.$sd.'='.$sd_final;
 	return $str;
 }
+
+function draw_qc_new($equipment_name,$year,$month,$day,$hour,$code)
+{
+	
+	
+}
+
 function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_examinations,$normal_qc_id,$abnormal_qc_id)
 {
 	echo '<form method=post>';
 	echo '<input type=hidden name=equipment_name value=\''.$equipment_name.'\'>';
+	echo '<input type=hidden name=left value=\''.$normal_qc_id.'\'>';
+	echo '<input type=hidden name=right value=\''.$abnormal_qc_id.'\'>';
+	echo '<input type=hidden name=submit value=show_LJ>';
+	echo '<input type=hidden name=year value=\''.$year.'\'>';
+	echo '<input type=hidden name=month value=\''.$month.'\'>';
+	echo '<input type=hidden name=day value=\''.$day.'\'>';
+	echo '<input type=hidden name=hour value=\''.$hour.'\'>';
+	echo '<input type=hidden name=period value=\''.$select.'\'>';
+		echo '<input type=hidden name=code value=\''.$code.'\'>';
+		echo '<input type=hidden name=qc_normal value=\''.$normal_qc_id.'\'>';
+		echo '<input type=hidden name=qc_abnormal value=\''.$abnormal_qc_id.'\'>';
+		if($all_examinations=='on')
+			{
+			echo '<input type=hidden name=all_examinations value=on >'	;	
+			}
+
 	view_qc_form();
-	echo '<table border=1>';
+	echo '<table border=1 style="border-collapse:collapse;">';
 	echo '<tr><th colspan=3>LJ Chart for '.$equipment_name.'</th></tr>
-			<tr><td></td><th> Normal QC-'.$normal_qc_id.'</th><th>Abnormal QC-'.$abnormal_qc_id.'</th></tr>';
+			<tr><td></td><th> QC-'.$normal_qc_id.'</th><th>QC-'.$abnormal_qc_id.'</th></tr>';
 	//QYYMMDDHH
 	if($select=='Year')
 	{
@@ -222,12 +255,25 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 			{
 				if($array_qc_normal['sd']>0)
 				{
-					$title=	$array_qc_normal['sample_id'].','.
-							$array_qc_normal['code'].','.
-							$array_qc_normal['result'].',sd obtained='.							
-							round((($array_qc_normal['result']-$array_qc_normal['target'])/$array_qc_normal['sd']),1).',target='.
-							$array_qc_normal['target'].',sd='.
-							$array_qc_normal['sd'];
+					$nsd=round((($array_qc_normal['result']-$array_qc_normal['target'])/$array_qc_normal['sd']),1);
+					$id='id_'	.$array_qc_normal['sample_id']
+								.$array_qc_normal['repeat_id']
+								.$array_qc_normal['code']
+								.$array_qc_normal['time_data'];
+					
+					$title=	'<table 
+								style="position:absolute;display:none;background-color:lightgray;" 
+								id=\''.$id.'\'>
+							<tr><td>QC Sample</td><td>'.$array_qc_normal['sample_id'].'</td></tr>
+							<tr><td>Code</td><td>'.$array_qc_normal['code'].'</td></tr>
+							<tr><td>Result</td><td>'.$array_qc_normal['result'].'</td></tr>
+							<tr><td>Target</td><td>'.$array_qc_normal['target'].'</td></tr>
+							<tr><td>SD</td><td>'.$array_qc_normal['sd'].'</td></tr>
+							<tr><td>SDI</td><td>'.$nsd.'</td></tr>
+							<tr><td>Lot</td><td>'.$array_qc_normal['lot'].'</td></tr>
+							</table>';
+							
+							
 					if($array_qc_normal['comment']=='-1')
 					{
 						$code_display='<font color=red>'.str_pad($array_qc_normal['code'],4,'_').'</font>';
@@ -243,9 +289,12 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 								$array_qc_normal['code'];
 							
 					//echo '<table border=0><tr><td><tt>'.str_pad($array_qc_normal['code'],4,'_').'</tt></td><td>';
-					echo '<table border=0><tr><td  style="padding: 0;"><button  style="padding: 0;"   name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display.'</tt></button></td><td>';
+					echo '<table border=0><tr><td  style="padding: 0;">
+					
+					<button  style="padding: 0;"   name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display.'</tt></button></td>
+					<td onclick="showhide(\''.$id.'\')" >';
 					echo make_qc_string( ($array_qc_normal['result']-$array_qc_normal['target'])/$array_qc_normal['sd'],$title );
-					echo '</td></tr></table>';
+					echo $title.'</td></tr></table>';
 				}
 			}
 		echo '</td>';
@@ -254,12 +303,24 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 			{
 				if($array_qc_abnormal['sd']>0)
 				{
-					$title=	$array_qc_abnormal['sample_id'].','.
-							$array_qc_abnormal['code'].','.
-							$array_qc_abnormal['result'].',sd obtained='.							
-							round((($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd']),1).',target='.
-							$array_qc_abnormal['target'].',sd='.
-							$array_qc_abnormal['sd'];
+
+					$nsd=round((($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd']),1);
+					$idd='id_'	.$array_qc_abnormal['sample_id']
+								.$array_qc_abnormal['repeat_id']
+								.$array_qc_abnormal['code']
+								.$array_qc_abnormal['time_data'];
+								
+					$title=	'<table 
+								style="position:absolute;display:none;background-color:lightgray;" 
+								id=\''.$idd.'\'>
+							<tr><td>QC Sample</td><td>'.$array_qc_abnormal['sample_id'].'</td></tr>
+							<tr><td>Code</td><td>'.$array_qc_abnormal['code'].'</td></tr>
+							<tr><td>Result</td><td>'.$array_qc_abnormal['result'].'</td></tr>
+							<tr><td>Target</td><td>'.$array_qc_abnormal['target'].'</td></tr>
+							<tr><td>SD</td><td>'.$array_qc_abnormal['sd'].'</td></tr>
+							<tr><td>SDI</td><td>'.$nsd.'</td></tr>
+							<tr><td>Lot</td><td>'.$array_qc_abnormal['lot'].'</td></tr>
+							</table>';
 			
 				if($array_qc_abnormal['comment']=='-1')
 					{
@@ -273,12 +334,15 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 								$array_qc_abnormal['sample_id'].'|'.
 								$array_qc_abnormal['repeat_id'].'|'.
 								$array_qc_abnormal['time_data'].'|'.
-								$array_qc_abnormal['code'];					
-					//echo '<table border=0><tr><td><tt>'.str_pad($array_qc_abnormal['code'],4,'_').'</tt></td><td>';
+								$array_qc_abnormal['code'];		
+								
+					echo '<table border=0><tr><td  style="padding: 0;">
 					
-					echo '<table border=0><tr><td  style="padding: 0;"><button type=submit style="padding: 0;"  name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display_ab.'</tt></button></td><td>';
+					<button  style="padding: 0;"   name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display_ab.'</tt></button></td>
+					<td onclick="showhide(\''.$idd.'\')" >';			
+					
 					echo make_qc_string( ($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd'] , $title);
-					echo '</td></tr></table>';
+					echo $title.'</td></tr></table>';
 				}
 			}
 		echo '</td></tr>';
@@ -311,6 +375,8 @@ function view_qc_form()
             isset($_POST['month'])&&
             isset($_POST['day'])&&
             isset($_POST['hour'])&&
+            isset($_POST['left'])&&
+            isset($_POST['right'])&&
             isset($_POST['period'])&&
             isset($_POST['equipment_name'])&&
             isset($_POST['code'])&&
@@ -323,6 +389,8 @@ function view_qc_form()
 		echo '<input type=hidden name=month value=\''.$_POST['month'].'\'>';
 		echo '<input type=hidden name=day value=\''.$_POST['day'].'\'>';
 		echo '<input type=hidden name=hour value=\''.$_POST['hour'].'\'>';
+		echo '<input type=hidden name=left value=\''.$_POST['left'].'\'>';
+		echo '<input type=hidden name=right value=\''.$_POST['right'].'\'>';
 		echo '<input type=hidden name=period value=\''.$_POST['period'].'\'>';
 		echo '<input type=hidden name=equipment_name value=\''.$_POST['equipment_name'].'\'>';
 		echo '<input type=hidden name=code value=\''.$_POST['code'].'\'>';
@@ -378,9 +446,16 @@ if(isset($_POST['use_qc']))
 
 //if(!isset($_POST['submit']))
 //{
-	echo '<table bgcolor=lightgreen><tr>';
-	echo '<td colspan=10><h1>LJ chart</h1></td></tr>';
-	echo '<form method=post>';
+
+	$qct=array(0,1,2,3,4,5,6,7,8,9);
+
+echo '<table border=1><tr><td align=top>';
+//////////
+
+	echo '<form method=post >';
+	
+	echo '<table style="width: 100%;height: 100%;" align=top bgcolor=lightgreen ><tr>';
+	echo '<th colspan=10><h3>Set up LJ chart</h3></th></tr>';
 	echo '<tr><td>Date:</td><td>';read_date_time(4);	echo '</td>';
 	echo '<td>Select:
 					</td><td>
@@ -393,30 +468,66 @@ if(isset($_POST['use_qc']))
 					</td></tr>';
 	echo '	</tr><td>Equipment:</td><td colspan=10>';
 			mk_select_from_sql('select equipment_name from qc_equipment','equipment_name','','');
-	echo '	<td></tr>';
+	echo '	Left:';
+	mk_select_from_array_return_value('left',$qct,'','5');
+	echo '	Right:';
+	mk_select_from_array_return_value('right',$qct,'','8');
+	echo '</td></tr>';
 	
-	echo '	</tr><td>Examination:';
-			mk_select_from_sql('select distinct code from qc_target','code','','');
+			echo '	</tr><td>Examination:</td><td>';
+						mk_select_from_sql('select distinct code from qc_target','code','','');
 	
 	if(isset($_POST['all_examinations']))
 	{
-	echo '	</td><td>All Examinations:<input type=checkbox checked name=all_examinations></tr>';
+	echo '	All Examinations:<input type=checkbox checked name=all_examinations></tr>';
 	}
 	else
 	{
-	echo '	</td><td>All Examinations:<input type=checkbox name=all_examinations></tr>';
+	echo '	All Examinations:<input type=checkbox name=all_examinations></tr>';
 	}
-	
-	echo '	<tr>
-				<td bgcolor=lightpink><input type=submit name=submit value=show_LJ></td>
-			</tr>
-			<tr>
-				<td bgcolor=lightblue><input type=submit name=submit value=insert_qc></td>
-				<td bgcolor=lightblue colspan=2>QC-normal:<input type=text name=qc_normal></td>
-				<td bgcolor=lightblue colspan=2 >QC-abnormal:<input type=text name=qc_abnormal></td>				
+		echo '	<tr>
+				<th colspan=10><input type=submit name=submit value=show_LJ></th>
 			</tr>';
-	echo '</form>';
+	echo '</table></form>';
+
+
+
+
+
+///////////
+echo '</td><td>';
+///////////
+
+	echo '<form method=post>';
+	echo '<table style="height:100%;background-color:lightblue"><tr>';
+	echo '<th colspan=10><h3>Insert QC Manually</h3></th></tr>';
+
+	echo '<tr><td>Date:';read_date_time(4);	echo '</td>';
+	echo '</tr>';
+	echo '	</tr><td>Equipment:';
+			mk_select_from_sql('select equipment_name from qc_equipment','equipment_name','','');
+	echo '</td></tr>';
+	echo '<td>Type';
+					mk_select_from_array_return_value('lefti',$qct,'','5');
+				echo '<input type=text name=qc_normal></td></tr><tr><td>Type';
+					mk_select_from_array_return_value('righti',$qct,'','8');
+				echo '<input type=text name=qc_abnormal><td></tr>';	
+	echo '	<tr>';
+
+	echo '<td>Examination:';
+			mk_select_from_sql('select distinct code from qc_target','code','','');	
+	echo '<input type=submit name=submit value=insert_qc></td></tr>';
+				
+	
 	echo '</table>';
+	echo '</form>';
+
+////////////
+echo '</td></tr></table>';
+
+
+
+
 //}
 
 if(isset($_POST['sample_id']) && !isset($_POST['comment']))
@@ -444,22 +555,24 @@ if(isset($_POST['sample_id']) && !isset($_POST['comment']))
 if(isset($_POST['submit']))
 {
 	if($_POST['submit']=='show_LJ')
-	{
+	{	
 		if(isset($_POST['all_examinations']))
-		{
-		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],$_POST['all_examinations'],5,8);
+		{	
+		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],$_POST['all_examinations'],$_POST['left'],$_POST['right']);
 		}
 		else
 		{
-		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],'',5,8);
+		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],'',$_POST['left'],$_POST['right']);
 		}
 	}	
 	if($_POST['submit']=='insert_qc')
 	{
 		$link=start_nchsls();
           
-		$sample_id_normal=500000000+(($_POST['year']-2000)*1000000)+$_POST['month']*10000+$_POST['day']*100+$_POST['hour'];
-		$sample_id_abnormal=800000000+(($_POST['year']-2000)*1000000)+$_POST['month']*10000+$_POST['day']*100+$_POST['hour'];
+		$sample_id_normal=$_POST['lefti']*100000000+(($_POST['year']-2000)*1000000)+$_POST['month']*10000+$_POST['day']*100+$_POST['hour'];
+		$sample_id_abnormal=$_POST['righti']*100000000+(($_POST['year']-2000)*1000000)+$_POST['month']*10000+$_POST['day']*100+$_POST['hour'];
+
+
 		
 		if(is_str_num($_POST['qc_normal']))
 		{
@@ -475,7 +588,7 @@ if(isset($_POST['submit']))
 										\''.$qc_data['sd'].	'\',
 										\''.$qc_data['lot'].'\' ,
 										\'1\')';
-			//echo $sqln;					
+			echo $sqln;					
 			$result=mysql_query($sqln,$link);
 			echo mysql_error();
 		}
@@ -494,9 +607,9 @@ if(isset($_POST['submit']))
 										\''.$qc_data['sd'].	'\',
 										\''.$qc_data['lot'].'\' ,
 										\'\')';
-			//echo $sqla;		
+			echo $sqla;		
 			$result=mysql_query($sqla,$link);
-						echo mysql_error();
+			echo mysql_error();
 		}
 
 	}

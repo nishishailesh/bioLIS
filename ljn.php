@@ -273,42 +273,16 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 		
 		if(mysql_num_rows($result_qc_normal)>0 || mysql_num_rows($result_qc_abnormal)>0 ||mysql_num_rows($result_qc_lol)>0)
 		{
-		echo '<tr><td bgcolor=lightgray cellpadding=0 title=\''.$result_comment_array['comment'].'\'><button name=sample_id value='.$i.'>'.$i.'</button></td>
-		
-		<td>';
-		
+		echo '<tr><td>'.$i.'</td><td>';
+			echo '<table>'; 
 			while($array_qc_normal=mysql_fetch_assoc($result_qc_normal))
 			{
-				if($array_qc_normal['sd']>0)
-				{
-					$title=	$array_qc_normal['sample_id'].','.
-							$array_qc_normal['code'].','.
-							$array_qc_normal['result'].',sd obtained='.							
-							round((($array_qc_normal['result']-$array_qc_normal['target'])/$array_qc_normal['sd']),1).',target='.
-							$array_qc_normal['target'].',sd='.
-							$array_qc_normal['sd'];
-					if($array_qc_normal['comment']=='-1')
-					{
-						$code_display='<font color=red>'.str_pad($array_qc_normal['code'],4,'_').'</font>';
-					}
-					else
-					{
-						$code_display=str_pad($array_qc_normal['code'],4,'_');
-					}
-					$use_qc=	$array_qc_normal['equipment_name'].'|'.
-								$array_qc_normal['sample_id'].'|'.
-								$array_qc_normal['repeat_id'].'|'.
-								$array_qc_normal['time_data'].'|'.
-								$array_qc_normal['code'];
-							
-					//echo '<table border=0><tr><td><tt>'.str_pad($array_qc_normal['code'],4,'_').'</tt></td><td>';
-					echo '<table border=0><tr><td  style="padding: 0;"><button  style="padding: 0;"   name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display.'</tt></button></td><td>';
-					echo make_qc_string( ($array_qc_normal['result']-$array_qc_normal['target'])/$array_qc_normal['sd'],$title );
-					echo '</td></tr></table>';
-				}
+				echo '<tr><td>'.$array_qc_normal['result'].'</td></tr>';
 			}
+			echo '</table>';
 		echo '</td>';
 		echo '<td>';
+
 			while($array_qc_abnormal=mysql_fetch_assoc($result_qc_abnormal))
 			{
 				if($array_qc_abnormal['sd']>0)
@@ -332,11 +306,13 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
 								$array_qc_abnormal['sample_id'].'|'.
 								$array_qc_abnormal['repeat_id'].'|'.
 								$array_qc_abnormal['time_data'].'|'.
-								$array_qc_abnormal['code'];					
-					//echo '<table border=0><tr><td><tt>'.str_pad($array_qc_abnormal['code'],4,'_').'</tt></td><td>';
+								$array_qc_abnormal['code'];
+					echo '<table border=0><tr><td><tt>'.str_pad($array_qc_abnormal['code'],4,'_').'</tt></td><td><tr>';
+					//echo make_qc_string( ($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd'] , $title);
+					echo ($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd'];
 					
-					echo '<table border=0><tr><td  style="padding: 0;"><button type=submit style="padding: 0;"  name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display_ab.'</tt></button></td><td>';
-					echo make_qc_string( ($array_qc_abnormal['result']-$array_qc_abnormal['target'])/$array_qc_abnormal['sd'] , $title);
+					echo '<table border=0>
+							<tr><td  style="padding: 0;"><button type=submit style="padding: 0;"  name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display_ab.'</tt></button></td><td>';
 					echo '</td></tr></table>';
 				}
 			}
@@ -373,7 +349,8 @@ function draw_qc($equipment_name,$year,$month,$day,$hour,$select,$code,$all_exam
                                                                 $array_qc_lol['code'];
 
                                         echo '<table border=0><tr><td  style="padding: 0;"><button type=submit style="padding: 0;"  name=use_qc value=\''.$use_qc.'\'><tt>'.$code_display_ab.'</tt></button></td><td>';
-                                        echo make_qc_string( ($array_qc_lol['result']-$array_qc_lol['target'])/$array_qc_lol['sd'] , $title);
+                                        //echo make_qc_string( ($array_qc_lol['result']-$array_qc_lol['target'])/$array_qc_lol['sd'] , $title);
+                                        echo ($array_qc_lol['result']-$array_qc_lol['target'])/$array_qc_lol['sd'];
                                         echo '</td></tr></table>';
                                 }
                         }
@@ -546,11 +523,13 @@ if(isset($_POST['submit']))
 	{
 		if(isset($_POST['all_examinations']))
 		{
-		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],$_POST['all_examinations'],5,8,9);
+		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],
+				$_POST['period'],$_POST['code'],$_POST['all_examinations'],4,4,4);
 		}
 		else
 		{
-		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],$_POST['period'],$_POST['code'],'',5,8,9);
+		draw_qc($_POST['equipment_name'],$_POST['year'],$_POST['month'],$_POST['day'],$_POST['hour'],
+							$_POST['period'],$_POST['code'],'',4,4,4);
 		}
 	}	
 	if($_POST['submit']=='insert_qc')

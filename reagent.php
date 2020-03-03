@@ -119,7 +119,7 @@ function print_reagent($sql)
 	if(!$result=mysql_query($sql,$link)){echo mysql_error();}
 	echo '<table border=1 bgcolor=lightgreen>
 	<tr><th colspan=20 >Reagents Matching Search Criteria</th></tr>
-	<tr><th></th><th></th><th>ID</th><th>Reagent</th><th>Lot</th><th>Creation</th><th>Expiry</th><th>Prepared By</th><th>Pack Size</th><th>Serial Number</th><th>Status</th>
+	<tr><th></th><th></th><th></th><th>ID</th><th>Reagent</th><th>Lot</th><th>Creation</th><th>Expiry</th><th>Prepared By</th><th>Pack Size</th><th>Serial Number</th><th>Status</th>
 	<th>Temperature on receipt</th><th>Receipt</th><th>Opening</th><th>Details</th></tr>
 	
 	';
@@ -141,6 +141,12 @@ function print_reagent($sql)
 		echo '<tr '.$rstyle.'>';
 		echo '<td bgcolor=yellow><button type=submit name=submit value=delete>x</button></td>';
 		echo '<td bgcolor=yellow><button type=submit name=submit value=edit>e</button></td>';
+		echo '<td bgcolor=yellow><button style="display:inline" type=submit name=submit 
+								value=label_print 
+								formtarget=_blank
+								formaction=print_reagent_label.php>p</button>
+									<input title="number of labels"  style="display:inline" type=text name=copy value=1 size=1>
+			</td>';
 		echo '<td><input type=text name=id readonly value=\''.$ar['id'].'\'</td>';
 		echo '<td>'.$ar['reagent_name'].'</td>';
 		//echo '<td style="background-color:pink;" >'.$ar['lot'].'</td>';				

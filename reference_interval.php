@@ -2,52 +2,6 @@
 
 
 
-/*
- <Glucose>
-<Fasting>
-
-	<Impaired_Fasting_Glucose>
-		<from>
-			100
-		</from>
-		<to>
-			125
-		</to>
-	</Impaired_Fasting_Glucose>
-	
-	<Diabetes_Mellitus>
-		<greater_than>
-			126
-		</greater_than>
-	</Diabetes_Mellitus>
-	
-</Fasting>
-<Post_Glucose>
-	
-	<Impaired_Glucose_Tolerance>
-		<from>
-			140
-		</from>
-		<to>
-			199
-		</to>
-	</Impaired_Glucose_Tolerance>
-	
-	<Diabetes_Mellitus>
-		<greater_than>
-			200
-		</greater_than>
-	</Diabetes_Mellitus>
-
-</Post_Glucose>
-
-</Glucose>
-
-*/
-
-
-
-
 function glucose_serum_reference_interval($xml,$sample_data)
 {
 	$GLOBALS['ri_str']='';
@@ -69,82 +23,173 @@ function glucose_serum_reference_interval($xml,$sample_data)
 	$GLOBALS['ri_str'] .='</table>';
 }
 
-/*
-
-<Bilirubin>
-	<Neonate>
-		<Age_Unit>hour</Age_Unit>
-		<Bilirubin_Unit>mg/dL</Bilirubin_Unit>
-		<Total_Bilirubin>
-			<age>0</age>
-			<less_than>5.8</less_than>
-		</Total_Bilirubin>
-		<Total_Bilirubin>
-			<age>6</age>
-			<less_than>7.3</less_than>
-		</Total_Bilirubin>
-		<Total_Bilirubin>
-			<age>12</age>
-			<less_than>8.8</less_than>
-		</Total_Bilirubin>
-		<Total_Bilirubin>
-			<age>18</age>
-			<less_than>10.2</less_than>
-		</Total_Bilirubin>
-		<Total_Bilirubin>
-			<age>24</age>
-			<less_than>11.7</less_than>
-		</Total_Bilirubin>
-		<Total_Bilirubin>
-			<age>30</age>
-			<less_than>12.4</less_than>
-		</Total_Bilirubin>
-	</Neonate>
-	<Adult>
-		<Total_Bilirubin>
-			<less_than>1.2</less_than>
-		</Total_Bilirubin>
-		<Direct_Bilirubin>
-			<less_than>0.2</less_than>		
-		</Direct_Bilirubin>
-		<Indirect_Bilirubin>
-			<less_than>1.2</less_than>		
-		</Indirect_Bilirubin>
-	</Adult>
-</Bilirubin>
-
-*/
 
 function bilirubin_serum_reference_interval($xml,$sample_data)
 {
 	$GLOBALS['ri_str']='';
-	if($sample_data['clinician']=='Paediatrics')
+	if($sample_data['location']=='F3N(503)')
 	{
+		
 		$GLOBALS['ri_str'] .= '<table border="1" align="center">';
 
-		$GLOBALS['ri_str'] .= '<tr> <th  align="center" colspan="4">Bilirubin, Serum/Plasma, mg/dl</th></tr>';	
-		$GLOBALS['ri_str'] .= '<tr> <th   align="center" colspan="4">Neonate</th></tr>';	
-		$GLOBALS['ri_str'] .= '<tr>	<th >Age (Hours)</th>
-									<th >Total Bilirubin</th>
-									<th >Age (Hours)</th>
-									<th >Total Bilirubin</th>
-								</tr>';
+		$GLOBALS['ri_str'] .= '<tr> <th  align="center" colspan="6">';
 
-		$GLOBALS['ri_str'] .='<tr align="center">
-								<td>'.$xml->Neonate->Total_Bilirubin[0]->age.'</td>
-								<td>&lt; '.$xml->Neonate->Total_Bilirubin[0]->less_than.'</td>
-							</tr>';
+		
+		$GLOBALS['ri_str'] .= 	$xml->Analyte_Unit.
+								', '.
+								$xml->Sample_Type;
+		$GLOBALS['ri_str'] .='</th></tr>';	
+
+		$GLOBALS['ri_str'] .='<tr><td colspan="3">Neonate, Full term, Total Bilirubin (NICE 2016)</td><td colspan="3">Adult and Children Reference Interval</td></tr>';	
+	
 		$GLOBALS['ri_str'] .='<tr>
-								<td>'.$xml->Neonate->Total_Bilirubin[1]->age.'</td>
-								<td>&lt; '.$xml->Neonate->Total_Bilirubin[1]->less_than.'</td>
-							</tr>';
+								<td>Age (hrs)</td><td>Phototherapy</td><td>Ex.Transfusion</td>
+								<td>Total Bilirubin</td><td>Direct Bilirubin</td><td>Indirect Bilirubin</td>
+								</tr>';
 		$GLOBALS['ri_str'] .='<tr>
-								<td>'.$xml->Neonate->Total_Bilirubin[2]->age.'</td>
-								<td>&lt; '.$xml->Neonate->Total_Bilirubin[2]->less_than.'</td>
-							</tr>';
+								<td>'.$xml->{'Class'}[0]->Subclass[0]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[0]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[0]->interval->exchange_transfusion->more_than.'</td>
+								<td>'.$xml->{'Class'}[1]->Subclass[0]->interval->less_than.'</td>
+								<td>&lt;'.$xml->{'Class'}[1]->Subclass[1]->interval->less_than.'</td>
+								<td>&lt;'.$xml->{'Class'}[1]->Subclass[2]->interval->less_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[1]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[1]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[1]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[2]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[2]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[2]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[3]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[3]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[3]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[4]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[4]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[4]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[5]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[5]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[5]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[6]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[6]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[6]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[7]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[7]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[7]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[8]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[8]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[8]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[9]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[9]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[9]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[10]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[10]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[10]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[11]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[11]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[11]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[12]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[12]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[12]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[13]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[13]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[13]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[14]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[14]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[14]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[15]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[15]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[15]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[16]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[16]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[16]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[17]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[17]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[17]->interval->exchange_transfusion->more_than.'</td>
+								</tr><tr>
+								<td>'.$xml->{'Class'}[0]->Subclass[18]->age.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[18]->interval->phototherapy->more_than.'</td>
+								<td>>'.$xml->{'Class'}[0]->Subclass[18]->interval->exchange_transfusion->more_than.'</td>
+						
+								</tr>';
 		
 		$GLOBALS['ri_str'] .='</table>';
 	}
+	else
+	{
+		
+		$GLOBALS['ri_str'] .= '<table border="1" align="center">';
+
+		$GLOBALS['ri_str'] .= '<tr> <th  align="center" colspan="3">';
+
+		
+		$GLOBALS['ri_str'] .= 	$xml->Analyte_Unit.
+								', '.
+								$xml->Sample_Type;
+		$GLOBALS['ri_str'] .='</th></tr>';	
+
+		$GLOBALS['ri_str'] .='<tr><td colspan="3">Adult and Children Reference Interval</td></tr>';	
+	
+		$GLOBALS['ri_str'] .='<tr>
+								<td>Total Bilirubin</td><td>Direct Bilirubin</td><td>Indirect Bilirubin</td>
+								</tr>';
+		$GLOBALS['ri_str'] .='<tr>
+								<td>'.$xml->{'Class'}[1]->Subclass[0]->interval->less_than.'</td>
+								<td>&lt;'.$xml->{'Class'}[1]->Subclass[1]->interval->less_than.'</td>
+								<td>&lt;'.$xml->{'Class'}[1]->Subclass[2]->interval->less_than.'</td>
+								</tr>';
+		
+		$GLOBALS['ri_str'] .='</table>';		
+		
+	}
+}
+
+
+function creatinine_serum_reference_interval($xml,$sample_data)
+{
+	$GLOBALS['ri_str']='';
+		
+		$GLOBALS['ri_str'] .= '<table border="1" align="center">';
+
+		$GLOBALS['ri_str'] .='<tr><td colspan="2">Creatinine Reference Interval,Serum/Plasma, mg/dL </td></tr>';	
+	
+		$GLOBALS['ri_str'] .='<tr>
+								<td>Male:'.$xml->Subclass[0]->Interval->From.'-'. $xml->Subclass[0]->Interval->To.'</td>
+								<td>Female:'.$xml->Subclass[1]->Interval->From.'-'. $xml->Subclass[1]->Interval->To.'</td>
+								</tr>';
+		
+		$GLOBALS['ri_str'] .='</table>';		
+}
+
+
+function uric_acid_serum_reference_interval($xml,$sample_data)
+{
+	$GLOBALS['ri_str']='';
+		
+		$GLOBALS['ri_str'] .= '<table border="1" align="center">';
+
+		$GLOBALS['ri_str'] .='<tr><td colspan="2">Uric Acid Reference Interval,Serum/Plasma, mg/dL </td></tr>';	
+	
+		$GLOBALS['ri_str'] .='<tr>
+								<td>Male:'.$xml->Subclass[0]->Interval->From.'-'. $xml->Subclass[0]->Interval->To.'</td>
+								<td>Female:'.$xml->Subclass[1]->Interval->From.'-'. $xml->Subclass[1]->Interval->To.'</td>
+								</tr>';	
+		$GLOBALS['ri_str'] .='</table>';		
 }
 
 ?>

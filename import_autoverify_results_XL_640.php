@@ -28,6 +28,10 @@ $uploadfile = $uploaddir . basename($_FILES['import_file']['name']);
 				{
 					if(ctype_digit($data[2]) && is_numeric($data[5]) && $data[5]>0)
 					{
+
+					 if(!in_array(get_sample_status($data[2]),$GLOBALS['final_stage']))
+                                         {
+
 						$batch_of_sample[$data[2]]='';
 						///////autoverify with no action
 						//autoverify($data[2],'','no');						
@@ -42,12 +46,18 @@ $uploadfile = $uploaddir . basename($_FILES['import_file']['name']);
 						{
 							$affected=mysql_affected_rows($link);
 							$counter=$counter+mysql_affected_rows($link);
-							if(get_sample_status($data[2])!='verified')	//to prevent already verified sample status change
-							{
-								//echo '<br><font color=red>['.$affected.']->'.$data[2].'->'.$data[4].'->'.$data[5].'</font>';
+							//if(get_sample_status($data[2])!='verified')	//to prevent already verified sample status change
+							//if(!in_array(get_sample_status($data[2]),$GLOBALS['final_stage']))
+							//{
+								echo '<br><font color=red>['.$affected.']->'.$data[2].'->'.$data[4].'->'.$data[5].'</font>';
 								change_sample_status($data[2],'analysed');
-							}
+							//}
 						}
+					 }
+					 else
+                                         {
+                                                echo '<br><font color=green>'.$data[2].':sample_id is released. unrelase to import</font>';
+                                         }
 					}
 					else
 					{

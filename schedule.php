@@ -189,7 +189,7 @@ function update_schedule()
 		if(!$drop_event_result=mysql_query($drop_event_sql,$link)){echo 'update_schedule() drop event error'.mysql_error();}
 		if(!$create_event_result=mysql_query($create_event_sql,$link)){echo 'update_schedule() create event error'.mysql_error();}
 		
-		//echo $create_event_sql.'<br>';
+		echo $create_event_sql.'<br>';
 	}	
 }
 
@@ -260,7 +260,7 @@ function save_new_schedule($array)
 			\''.$array['authority'].'\'
 			)';
 	
-	//echo $sql;	
+	echo $sql;	
 	if(!$result=mysql_query($sql,$link))
 	{
 		echo 'save_schedule()'.mysql_error();

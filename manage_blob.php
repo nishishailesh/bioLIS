@@ -65,7 +65,8 @@ function upload_file()
 		return;
 	}	
 	
-	$link=mysql_connect('127.0.0.1',$_SESSION['login'],$_SESSION['password']);
+	$link=mysql_connect('127.0.0.1','dfasd345','df54*(&sdf');
+//'dfasd345','df54*(&sdf')
 	mysql_select_db('attachment',$link);
 	
 	
@@ -154,7 +155,8 @@ function make_where($primary_key_array)
 */
 function download_file()
 {
-	$link=mysql_connect('127.0.0.1',$_SESSION['login'],$_SESSION['password']);
+	$link=mysql_connect('127.0.0.1','dfasd345','df54*(&sdf');
+	//$link=mysql_connect('127.0.0.1',);
 	mysql_select_db('attachment',$link);
 
 	$where_condition_final=make_where($_POST);
@@ -172,7 +174,7 @@ function download_file()
 		{
 			$result_array=mysql_fetch_assoc($result);	
 			$name=$result_array['attachment_name'];
-			$length=10000000000;
+			$length=strlen($result_array['attachment']);
 			$type='pdf';
 			header('Content-Disposition: attachment; filename="'.$name.'"');
 			header("Content-length: $length");
@@ -196,7 +198,8 @@ function get_file_name($id)
 {
 		$sql_attachment='select * from attachment where id=\''.$id.'\'';
 		
-		$link=mysql_connect('127.0.0.1',$_SESSION['login'],$_SESSION['password']);
+		$link=mysql_connect('127.0.0.1','dfasd345','df54*(&sdf');
+		//$link=mysql_connect('127.0.0.1',$_SESSION['login'],$_SESSION['password']);
 		mysql_select_db('attachment',$link);
 		
 		if(!$result=mysql_query($sql_attachment,$link)){echo mysql_error();}

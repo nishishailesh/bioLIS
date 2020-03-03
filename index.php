@@ -3,6 +3,7 @@ session_start();
 
 echo '<html>';
 echo '<head>';
+echo '<link rel="stylesheet" href="my_styles.css">	';	
 echo '</head>';
 echo '<body>';
 
@@ -10,23 +11,17 @@ echo '<body>';
 //print_r($GLOBALS);
 //echo '</pre>';
 
+
 echo '
-<form method=post action=main_menu.php>
-<table>
-<tr>
-<td>Login Name</td>
-<td><input type=text name=login value=WriteLoginName></td>
-</tr>
-<tr>
-<td>Password</td>
-<td><input type=password name=password value=password></td>
-</tr>
-<tr>
-<td><input type=submit name=action value=Login></td>
-</tr>
-</table>
+<form class=logingrid method=post action=main_menu.php>
+<div 	class=message>Biochemistry NCHSLS NCH Surat</div>
+<div 	class=lbl>Login Name</div>
+<input  class=fld type=text name=login placeholder=WriteLoginName>
+<div	class=lbl>Password</div>
+<div><input 	class=fld type=password name=password placeholder=password></input></div>
+<input class=submit_button type=submit name=action value=Login></input>
 </form> ';
 
-echo '</body>';
-
+echo '</body></html>';
+//echo $_SERVER['REMOTE_ADDR'];
 ?>

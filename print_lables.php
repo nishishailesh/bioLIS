@@ -149,7 +149,7 @@ if(isset($_POST['action']))
 	{
 		print_lable_incremental($pdf,$style,$_POST['line1'],$_POST['line2'],$_POST['line3'],$_POST['line4'],$_POST['number']);	
 	}
-	$pdf->Output('labels.php', 'I');	
+	$pdf->Output('user_labels.pdf', 'I');	
 
 }
 

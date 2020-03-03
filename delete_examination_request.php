@@ -32,6 +32,7 @@ function delete_examination($sample_id,$filename,$disabled)
 {
 	$link=start_nchsls();
 	$sql='select * from examination where sample_id=\''.$sample_id.'\'';
+	//echo $sql;
 	if(!$result=mysql_query($sql,$link)){echo 'No such Sample';return FALSE;}
 	if(mysql_num_rows($result)<1){echo 'No examinations';return FALSE;}
 	
@@ -97,9 +98,11 @@ elseif(isset($_POST['sample_id']) && isset($_POST['action']))
 			$sql='delete from examination where sample_id=\''.$_POST['sample_id'].'\' and id=\''.$_POST['id'].'\'';
 			//echo $sql;
 			$result=mysql_query($sql,$link);
+			//echo mysql_error();
 			//echo 'deleted '.mysql_affected_rows($link).' examination<br>';	
 		}
 		edit_sample($_POST['sample_id'],'edit_request.php	','disabled','no');
+		//echo 'deleting...';
 		delete_examination($_POST['sample_id'],'delete_examination_request.php	','');
 	}	
 	

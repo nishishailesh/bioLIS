@@ -221,7 +221,7 @@ function download_blob($post)
 		{
 			$result_array=mysql_fetch_assoc($result);	
 			$name=$result_array[$valuee.'_name'];
-			$length=10000000000;
+			$length=strlen($result_array[$valuee]);
 			$type='pdf';
 			header("Content-Disposition: attachment; filename=$name");
 			header("Content-length: $length");

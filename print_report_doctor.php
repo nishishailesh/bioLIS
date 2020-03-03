@@ -33,6 +33,8 @@ exit();
 function search_form($filename)
 {
 	$link=start_nchsls();
+echo ':';
+
 	$sql='desc sample';
 	if(!$result=mysql_query($sql,$link)){echo mysql_error();}
 	$tr=1;
@@ -70,13 +72,15 @@ function search_form($filename)
 
 if($_SESSION['login']=='doctor')
 {
-	//echo '<a href=print_report_doctor.php>Biochemistry Report</a><br>';
-	echo '<table><tr><td bgcolor=lightblue><a href=logout.php>Logout</a></td>';
+	echo '<table><tr>';
+	echo '<td><a href=print_report_doctor.php>Biochemistry Report</a></td>';
+echo '
+<td bgcolor=lightblue><a href=logout.php>Logout</a></td>';
 	echo '<td bgcolor=lightgreen><a href=doctor_help.html target=_blank>HELP</a></td></tr></table>';
 }
 
 search_form('print_report_doctor.php');	
-echo '<h2 style="page-break-before: always;"></h2>';
+echo '<h2 style="page-break-before: always;">--</h2>';
 
 $search_str='select sample_id from sample '; 
 $where=array();

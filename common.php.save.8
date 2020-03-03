@@ -1,18 +1,122 @@
-<?php 
+<?php
 
-
+//require_once('tcpdf/config/lang/eng.php');
+require_once('tcpdf/tcpdf.php');
+require_once('reference_interval.php');
 // calibration, EQC,Kit,checklist
 
-$reflex='yes';
+/////////donot do anything above/////////
+$reflex=s';
+/////////do not do anything below////////
+
+//$GLOBALS['final_stage']=array('verified','released');
+$GLOBALS['final_stage']=array('released');
+
 					//if 'no'=>it will bypass reflex testing
 date_default_timezone_set('Asia/Kolkata');
 
-/////////////////////////////////
-function login_varify()
+/////////////////////////////////////////////
+////////////mysql to mysqli//////////////////
+/////////////////////////////////////////////
+
+$GLOBALS['link']='';
+
+if(substr(phpversion(),0,1)>=7)
 {
-return mysql_connect('127.0.0.1',$_SESSION['login'],$_SESSION['password']);
+	require_once 'new_to_old.php';
+}
+///////comment upto here to enable older mysql <7
+/////////////////////////////////
+
+///////////////////For user setting change////////////////////
+function get_link($u,$p)
+{
+	$link=mysql_connect('127.0.0.1',$u,$p);
+	if(!$link)
+	{
+		echo 'error1:'.mysql_error(); 
+		return false;
+	}
+	return $link;
 }
 
+function run_query($link,$db,$sql)
+{
+	$db_success=mysql_select_db($db,$link);
+	
+	if(!$db_success)
+	{
+		echo 'error2:'.mysql_error(); return false;
+	}
+	else
+	{
+		$result=mysql_query($sql,$link);
+	}
+	
+	if(!$result)
+	{
+		echo 'error3:'.mysql_error(); return false;
+	}
+	else
+	{
+		return $result;
+	}	
+}
+
+function get_single_row($result)
+{
+		if($result!=false)
+		{
+			return mysql_fetch_assoc($result);
+		}
+		else
+		{
+			return false;
+		}
+}
+
+function my_safe_text($link,$str)
+{
+	return mysqli_real_escape_string($link,$str);
+}
+
+/*
+
+ CREATE TABLE `user` (
+  `user` varchar(100) NOT NULL,
+  `password` varchar(500) NOT NULL,
+  `expirydate` date NOT NULL
+)
+
+*/
+
+
+//create user table
+//change root password // or create saparate user
+//assign password to all users
+
+function login_varify()
+{
+				
+    if(!$link=get_link('dfasd345','df54*(&sdf')){return false;}
+    
+    $sql='select * from user where user = \''.$_SESSION['login'].'\'';
+    $result=run_query($link,'biochemistry',$sql);
+    if($result===FALSE)
+    {
+		//echo mysqli_error($link);
+		return false;
+	}
+    
+    $result_array=get_single_row($result);
+    if(!password_verify($_SESSION['password'],$result_array['password'])){return false;}
+    
+    if(strtotime($result_array['expirydate']) < strtotime(date("Y-m-d")))
+    {
+		return 101;
+	}
+    return 100;
+}
 /////////////////////////////////
 function select_nchsls($link)
 {
@@ -22,8 +126,17 @@ function select_nchsls($link)
 ///////////////////////////////////
 function start_nchsls()
 {
-	if(!$link=login_varify())
+	$ret=login_varify();
+	//echo 'verified';
+	if($ret==100)
 	{
+		//echo 'link 100 returned';
+		$link=get_link('dfasd345','df54*(&sdf');
+	}
+	else
+	{
+		echo 'database/table problem? wrong password? expired password?';
+		//header("location:chp/index.php"); 
 		exit();
 	}
 
@@ -32,8 +145,13 @@ function start_nchsls()
 	{
 		exit();
 	}
-return $link;
+	$GLOBALS['link']=$link;	
+	return $link;
 }
+
+
+
+///////////////////END of For user setting change////////////////////
 
 function my_mysql_query($sql,$link)
 {
@@ -61,6 +179,9 @@ repeat-batch to know pending, not-entered receipt, not-run sample
 printed-dispatched
 
  */
+ 
+//			<li><a href=new_request_barcode_general_option2_OPD.php>New OPD Blood(S,P)</a>
+
 function main_menu()
 {
 	echo '<link rel="stylesheet" type="text/css" href="horizontal.css">
@@ -70,11 +191,8 @@ function main_menu()
 	<ul>
 	<li><a href="#">New</a>
 		<ul>
-			<li><a href=new_request.php>New</a>
-			<li><a href=new_request_FS.php>New Copy[F-S]</a>
-			<li><a href=new_request_barcode_OPD.php>New OPD Blood(S,P)</a>
-			<li><a href=new_request_barcode_ward.php>New Ward Blood(S,P)</a>
 			<li><a href=new_request_barcode_general_option2.php>New General</a>
+			<li><a href=new_request_barcode_general_option2_OPD.php>New OPD</a>
 		</ul>
 	<li><a href="#">Edit</a>
 		<ul>
@@ -86,9 +204,6 @@ function main_menu()
 	<li><a href="#">Worklist</a>
 		<ul>
 			<li><a href=1_by_1.php>1-by-1</a>
-			<li><a href=send_sample_to_XL_640.php>Send to XL-640</a>
-			<li><a href=manage_barcoded_batch_of_XL_640.php>Manage Barcoded Batch of XL-640</a>
-			<li><a href=send_sample_to_miura.php>Send to Miura-300</a>
 			<li><a href=examination_wise_worklist.php>Examination wise worklist</a>
 			<li><a href=sample_wise_worklist.php>Sample wise worklist</a>
 		</ul>
@@ -96,48 +211,46 @@ function main_menu()
 		<ul>
 			<li><a href=import_results_XL_640.php>Import from Erba XL-640</a>';
 
-//comment below this when autoverification needs to be turned off	
-//<li><a href=print_report_pdf.php>Print-PDF-A5</a>		
-	echo '	<li><a href=import_autoverify_results_XL_640.php>Import-cum-autoverify Erba XL-640</a>
+	echo '	<li><a href=import_autoverify_results_XL_640.php>Import-cum-autoverify Erba XL-640</a>';
+	echo '	
 			<li><a href=autoverify.php>Autoverify 1-by-1</a>
 			<li><a href=search_autoverify.php>Search-cum-Autoverify</a>';
 			
 	echo '	<li><a href=critical_report.php>Critical Report</a>
 			<li><a href=examination_wise_results.php>Examination wise Entry</a>	
-			<li><a href=import_results_miura.php>Import from Miura-300</a>
 		</ul>
 	<li><a href="#">Report</a>
 		<ul>
 			<li><a href=print_report.php>Print</a>
-			<li><a href=print_report_pdf_A4.php>Print-PDF-A4</a>
-			<li><a href=print_report_pdf_A4_discontinuous.php>Print(barcode)</a>
+			<li><a href=print_report_pdf_A4_ri_last.php>Print-PDF-A4</a>
+			<li><a href=print_report_pdf_A4_discontinuous_ri.php>Print(barcode)</a>
 		</ul>
 	<li><a href="#">Quality</a>
 		<ul>
 			<li><a href=import_qc.php>Import QC</a>
-			<li><a href=repeat_check.php>Repeat Check</a>
 			<li><a href=lj_chart.php>LJ chart/ insert/comment QC</a>
 			<li><a href=refrigerator_temperature.php>Refrigerator Temperatures</a>
 			<li><a href=environmental_parameter.php>Environmental Parameter</a>
 			<li><a href=equipment_log.php>Equipment Log</a>
 			<li><a href=equipment_record.php>Equipment Record</a>
 			<li><a href=nc.php>Nonconformity Records</a>
-			<li><a href=consumable.php>Inventory Records</a>
-			<li><a href=reagent.php>Reagents</a>
-			<li><a href=print_label_48.php>Print 48 lables</a></li>
+			<li><a href=reagent.php>Reagents</a>	
 			<li><a href=calibration.php>Calibrations</a>
-			<li><a href=get_monthly_qc_data.php>Monthly QC Records</a>
+			<li><a href=TAT.php>Turnaround time</a>			
 		</ul>
 	<li><a href="#">Documents/Records</a>
 			<ul>
-				<li><a target=_blank href="NCHSLS/c/001 Biochemistry/Documents/Internal Documents/BI 0015 Standard Oprating Procedures Manual/SOP">SOP</a>		
 				<li><a target=_blank href=view_scope.php>Scope</a></li>
 				<li><a href=view_data.php>View (from database)</a>
 				<li><a href=NCHSLS target="_blank">View(from file system)</a>
-				<li><a href=upload.php>Upload</a>
+				<li><a href=docs>Docs Upload</a>
 				<li><a href="monthly_sample_id_change.php">update sample_id</a>
-				<li><a href=letter.php>Letter</a>
-				<li><a href="NCHSLS/c/001%20Biochemistry/Documents/Internal%20Documents/BI%200026%20Physical%20copy%20of%20online%20LIS%20user-manual/BI%200025%20Physical%20copy%20of%20online%20LIS%20user-manual.pdf">User Manual</a>
+				<li><a href=print_label_48.php>Print 48 lables</a></li>
+				<li><a href=print_lables.php>Print barcode labels</a></li>	
+				<li><a href=new_request.php>New</a>
+				<li><a href=new_request_FS.php>New Copy[F-S]</a>
+				<li><a href=release.php>Release</a>
+
 			</ul>
 	
 	<li><a href="schedule.php">Reminders</a>
@@ -161,7 +274,7 @@ function mk_select_from_table($field,$disabled,$default)
 	$sql='select `'.$field.'` from '.$field;
 	if(!$result=mysql_query($sql,$link)){return FALSE;}
 	
-		echo '<select  '.$disabled.' name='.$field.'>';
+		echo '<select id="fld" '.$disabled.' name='.$field.'>';
 		while($result_array=mysql_fetch_assoc($result))
 		{
 		if($result_array[$field]==$default)
@@ -235,7 +348,7 @@ function mk_select_from_array_return_value($name, $select_array,$disabled,$defau
 		return TRUE;
 }
 
-function edit_sample($sample_id,$filename,$disabled,$type_preservative_change)
+function edit_sample($sample_id,$filename,$disabled='',$type_preservative_change='',$status_change='no')
 {
 	$link=start_nchsls();
 	$counter=1;
@@ -255,7 +368,7 @@ function edit_sample($sample_id,$filename,$disabled,$type_preservative_change)
 	foreach($sample_array as $key=>$value)
 	{
 		if($counter%4==1){echo '<tr>';}
-		if($key=='sample_id')
+		if($key=='sample_id' || $key=='released_by' ||$key=='released_at')
 		{
 			echo '<td>'.$key.'</td><td><input type=text  readonly value=\''.$value.'\' name='.$key.'></td>';
 		}
@@ -264,7 +377,10 @@ function edit_sample($sample_id,$filename,$disabled,$type_preservative_change)
 		{
 			echo '<td>'.$key.'</td><td><input type=text  readonly value=\''.$value.'\' name='.$key.'></td>';
 		}
-		
+		elseif($key=='status' && $type_preservative_change=='no')
+		{
+			echo '<td>'.$key.'</td><td><input type=text  readonly value=\''.$value.'\' name='.$key.'></td>';
+		}		
 		
 		else
 		{
@@ -291,7 +407,7 @@ function save_sample($post_array)
 		{
 			if($key!='action')
 			{		
-			$sql=$sql.' '.$key.'=\''.$value.'\' , ';
+				$sql=$sql.' '.$key.'=\''.$value.'\' , ';
 			}
 		}
 
@@ -305,6 +421,7 @@ function save_sample($post_array)
 
 function change_sample_status($sample_id,$str)
 {
+	//echo $sample_id.'->'.$str.'<br>';
 	$link=start_nchsls();
 	$sql='update sample set status=\''.$str.'\' where sample_id=\''.$sample_id.'\'';
 	if(!mysql_query($sql,$link)){echo mysql_error(); return FALSE;}
@@ -402,8 +519,13 @@ function insert_single_examination($sample_id,$id)
 		$link=start_nchsls();
 		$sql='select * from scope where id=\''.$id.'\'';
 		$result=mysql_query($sql,$link);
-		$post_array=mysql_fetch_assoc($result);
-				
+		
+		if(!$post_array=mysql_fetch_assoc($result))
+		{
+			echo 'insert_single_examination($sample_id,$id)'.mysql_error();
+			return;
+		}
+		
 		$sql='insert into examination (`sample_id`, `id`, `name_of_examination`, `sample_type`, `preservative`, `method_of_analysis`, `result`, `unit`, `referance_range`, `code`, `details`,`NABL_Accredited`) 
 					values ('.
 					'\''.$sample_id.'\' , '.
@@ -445,7 +567,7 @@ function insert_profile($sample_id,$profile)
 		{
 			if($key!='profile' && $value!=NULL && $key!='sample_type' && $key!='preservative')
 			{
-			insert_single_examination($sample_id,$value);
+				insert_single_examination($sample_id,$value);
 			}
 		}
 	}
@@ -527,6 +649,8 @@ function save_examination($post_array)
 	}
 }
 
+
+
 function save_single_examination($sample_id,$examination_id,$result)
 {
 	$link=start_nchsls();
@@ -557,7 +681,17 @@ function select_examination($sample_id,$filename,$disabled)
 	if(mysql_num_rows($result_sample_data=mysql_query($sql_sample_data,$link))!=1){echo 'No such Sample';return FALSE;}
 	
 	$sample_array=mysql_fetch_assoc($result_sample_data);
-	$sql='select * from scope where sample_type=\''.$sample_array['sample_type'].'\' and preservative=\''.$sample_array['preservative'].'\' or name_of_examination like \'Z_%\' order by name_of_examination';
+	//$sql='select * from scope where sample_type=\''.$sample_array['sample_type'].'\' and preservative=\''.$sample_array['preservative'].'\' or name_of_examination like \'Z_%\' order by name_of_examination';
+	$sql='select * from scope where 
+				((sample_type=\''.$sample_array['sample_type'].'\' and 
+				preservative=\''.$sample_array['preservative'].'\' ) 
+				
+				or 
+				
+				name_of_examination like \'Z_%\' )
+				
+				and Available=\'yes\' order by name_of_examination';
+	
 	//echo $sql;
 	$result=mysql_query($sql,$link);
 
@@ -602,15 +736,27 @@ function select_examination($sample_id,$filename,$disabled)
 function print_sample_worklist($sample_id)
 {
 		$link=start_nchsls();
+		$all_sample_details=get_sample($sample_id);
+		
 		$sql='select * from examination where sample_id=\''.$sample_id.'\'';
 		$result=mysql_query($sql,$link);
 		echo '<table border=1 bgcolor=lightblue>';
-		echo '<tr><td colspan=2 align=left>-----['.$sample_id.']-----<td>';
+		echo '<tr><td colspan=3 align=left>-----['.$sample_id.']-----<td>';
+		echo '<tr><td colspan=3 style="background:pink; color:blue;">'.$all_sample_details['sample_type'].'/'.$all_sample_details['preservative'].'</td></tr>';
 		while($post_array=mysql_fetch_assoc($result))
 		{
 			echo '<tr><td>'.$post_array['name_of_examination'].'</td><td>'.$post_array['code'].'</td><td>'.$post_array['result'].'</td></tr>';
 		}
 		echo '</table>';
+}
+
+function get_sample($sample_id)
+{
+	$link=start_nchsls();
+	$sql_sample_examination='select * from	sample	where sample_id=\''.$sample_id.'\' ';
+	
+	if(!$result_sample_examination=mysql_query($sql_sample_examination,$link)){echo mysql_error();return FALSE;}
+	return $array_sample=mysql_fetch_assoc($result_sample_examination);
 }
 
 
@@ -672,108 +818,133 @@ $strr=str_split($str);
 return $str;
 }
 
-function check_critical_abnormal_reportable($sample_id,$code)
+/*
+$error_code_text=array(	'-1'=>'mysql error',
+					'-2'=>'not done',
+					'-3'=>'not numeric',
+					'-4'=>'no such record',
+					'0'=>'autoverified',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'7'=>'critical alert not reported',
+					'8'=>'critical alert reporting incomplate',
+					'11'=>'dbil>tbil and differance is more than 10 persant'
+					);
+*/
+				
+function check_critical_abnormal_reportable($sample_type,$code,$result)
 {
 	$link=start_nchsls();
-	$sql_sample_examination='
-		SELECT s.sample_id, s.sample_type, e.code ecode, e.result, a.operator o1, a.value ov1, aa.operator o2, aa.value ov2, c.operator c1, c.value cv1, cc.operator c2, cc.value cv2,
-		r.operator r1, r.value rv1,rr.operator r2, rr.value rv2
-		FROM sample s
-		LEFT outer JOIN examination e          ON s.sample_id = e.sample_id
-		left outer JOIN abnormal_alert a        ON e.code = a.code      and  a.sample_type = s.sample_type
-		LEFT  outer  JOIN abnormal_alert aa ON e.code=aa.code      AND aa.sample_type = s.sample_type AND a.operator <> aa.operator
-		LEFT  outer JOIN critical_alert c         ON e.code=c.code       AND c.sample_type = s.sample_type
-		LEFT  outer JOIN critical_alert cc       ON e.code=cc.code     AND cc.sample_type = s.sample_type AND c.operator <> cc.operator
-		LEFT  outer JOIN reportable_alert r   ON e.code=r.code        and  a.sample_type = s.sample_type
-		LEFT  outer JOIN reportable_alert rr  ON e.code=rr.code       and  c.sample_type = rr.sample_type AND r.operator <> rr.operator
-
-		where s.sample_id =\''.$sample_id.'\' and e.code=\''.$code.'\'
-		group by e.code';
-
-				
-	if(!$result_sample_examination=mysql_query($sql_sample_examination,$link)){echo mysql_error();return -1;}
-    
-	$dt=mysql_fetch_assoc($result_sample_examination);
-    if(strlen($dt['result'])<=0)
-	{
-		return -2;
-	}
-    elseif(!is_str_num($dt['result']))
-    {
-        return -3;
-    }
-    else
-    {	
-
-
-
-		if($dt['r1']=='less_than')
-		{
-			if($dt['result']<$dt['rv1']){return 1;}		//absurd low
-		}
-		if($dt['r2']=='less_than')
-		{
-			if($dt['result']<$dt['rv2']){return 1;}		//absurd low
-		}
-
-
-		
-		if($dt['r1']=='more_than')
-		{
-			if($dt['result']>$dt['rv1']){return 2;}		//absurd high
-		}
-		if($dt['r2']=='more_than')
-		{
-			if($dt['result']>$dt['rv2']){return 2;}		//absurd high
-		}
-		
-
-		if($dt['c1']=='less_than')
-		{
-			if($dt['result']<$dt['cv1']){return 3;}		//critical low
-		}
-		if($dt['c2']=='less_than')
-		{
-			if($dt['result']<$dt['cv2']){return 3;}		//critical low
-		}
-
-
-		
-		if($dt['c1']=='more_than')
-		{
-			if($dt['result']>$dt['cv1']){return 4;}		//critical high
-		}
-		if($dt['c2']=='more_than')
-		{
-			if($dt['result']>$dt['cv2']){return 4;}		//critical high
-		}
-		
-		
-		if($dt['o1']=='less_than')
-		{
-			if($dt['result']<$dt['ov1']){return 5;}		//abnormal low
-		}
-		if($dt['o2']=='less_than')
-		{
-			if($dt['result']<$dt['ov2']){return 5;}		//abnormal low
-		}
-
-
-		
-		if($dt['o1']=='more_than')
-		{
-			if($dt['result']>$dt['ov1']){return 6;}		//abnormal high
-		}
-		if($dt['o2']=='more_than')
-		{
-			if($dt['result']>$dt['ov2']){return 6;}		//abnormal high
-		}
-		
-		return 0;
-		
-	}
-		
 	
+	if(strlen($result)==0){return -2;}
+	if(!is_str_num($result)){return -3;}
+	//echo '<pre>';
+	//echo 'check_critical_abnormal_reportable()'.$sample_type.'-'.$code.'-'.$result.'<br>';
+	//echo '</pre>';
+
+	$link=start_nchsls();
+	
+////reportable
+	$sql_reportable='select * from reportable_alert where code=\''.$code.'\' and sample_type=\''.$sample_type.'\'';
+	if(!$result_reportable=mysql_query($sql_reportable,$link))
+	{
+		echo 'check_critical_abnormal_reportable(reportable):'.mysql_error();
+		return -1;
+	}
+	
+	while($data_reportable=mysql_fetch_assoc($result_reportable))
+	{
+		//echo '<pre>';
+		//print_r($data_reportable);
+		//echo '</pre>';	
+		if($data_reportable['operator']=='less_than' && $result<$data_reportable['value'])
+		{
+			return 1;
+		}
+		if($data_reportable['operator']=='more_than' && $result>$data_reportable['value'])
+		{
+			return 2;
+		}			
+	}
+
+////critical
+	$sql_critical='select * from critical_alert where code=\''.$code.'\' and sample_type=\''.$sample_type.'\'';
+	if(!$result_critical=mysql_query($sql_critical,$link))
+	{
+		echo 'check_critical_abnormal_reportable(critical):'.mysql_error();
+		return -1;
+	}
+	
+	while($data_critical=mysql_fetch_assoc($result_critical))
+	{
+		//echo '<pre>';
+		//print_r($data_critical);
+		//echo '</pre>';	
+		if($data_critical['operator']=='less_than' && $result<$data_critical['value'])
+		{
+			return 3;
+		}
+		if($data_critical['operator']=='more_than' && $result>$data_critical['value'])
+		{
+			return 4;
+		}			
+	}
+
+
+
+////reflex
+        $sql_reflex='select * from reflex_alert where code=\''.$code.'\' and sample_type=\''.$sample_type.'\'';
+        if(!$result_reflex=mysql_query($sql_reflex,$link))
+        {
+                echo 'check_critical_abnormal_reportable(reflex):'.mysql_error();
+                return -1;
+        }
+        
+        while($data_reflex=mysql_fetch_assoc($result_reflex))
+        {
+                //echo '<pre>';
+                //print_r($data_critical);
+                //echo '</pre>';        
+                if($data_reflex['operator']=='less_than' && $result<$data_reflex['value'])
+                {
+                        return 12;
+                }
+                if($data_reflex['operator']=='more_than' && $result>$data_reflex['value'])
+                {
+                        return 13;
+                }
+        }
+
+
+
+////abnormal
+	$sql_abnormal='select * from abnormal_alert where code=\''.$code.'\' and sample_type=\''.$sample_type.'\'';
+	if(!$result_abnormal=mysql_query($sql_abnormal,$link))
+	{
+		echo 'check_critical_abnormal_reportable(abnormal):'.mysql_error();
+		return -1;
+	}
+	
+	while($data_abnormal=mysql_fetch_assoc($result_abnormal))
+	{
+		//echo '<pre>';
+		//print_r($data_abnormal);
+		//echo '</pre>';	
+		if($data_abnormal['operator']=='less_than' && $result<$data_abnormal['value'])
+		{
+			return 5;
+		}
+		if($data_abnormal['operator']=='more_than' && $result>$data_abnormal['value'])
+		{
+			return 6;
+		}			
+	}
+			
+	return 0;
 }
 
 function get_all_details_of_a_sample($sample_id)
@@ -897,6 +1068,22 @@ if($all_array)
 	foreach($all_array as $key=>$value)
 		{
 			if($value['code']==$code)
+			{
+				return $value;
+			}
+		}
+}
+return FALSE;
+}
+
+function get_all_data_of_examination_from_ex_id($id,$sample_id)
+{
+$all_array=get_all_details_of_a_sample($sample_id);
+if($all_array)
+{
+	foreach($all_array as $key=>$value)
+		{
+			if($value['id']==$id)
 			{
 				return $value;
 			}
@@ -1065,17 +1252,79 @@ function lipid_profile($sample_id)
 	}
 		//both(TandD) are not done, both are not number, dbil>tbil
 }
+
+
+function tibc($sample_id)
+{
+	//echo '<h1>Reached tibc()</h1>';
+	$uibc=get_examination_result('UIBC',$sample_id);
+	$iron=get_examination_result('IRON',$sample_id);
+
+	
+	if($uibc!==FALSE && $iron!==FALSE)  	//they are requested
+	{
+		//echo '222';
+
+		//strip of ( and ) before testing number
+		if($uibc[0]=='(')
+		{
+			$uibc_striped=substr($uibc,1);
+		}
+		else
+		{
+			$uibc_striped=$uibc;
+		}
+		
+		//if($uibc[strlen((string)$uibc_striped)]==')')
+		if(substr($uibc_striped,-1)==')')
+		{
+			$uibc_striped_last=substr($uibc_striped,0,-1);
+		}
+		else
+		{
+			$uibc_striped_last=$uibc_striped;
+		}		
+		
+		if($iron[0]=='(')
+		{
+			$iron_striped=substr($iron,1);
+		}
+		else
+		{
+			$iron_striped=$iron;
+		}
+		
+		//if($iron[strlen((string)$iron_striped)]==')')
+		if(substr($iron_striped,-1)==')')
+		{
+			$iron_striped_last=substr($iron_striped,0,-1);
+		}
+		else
+		{
+			$iron_striped_last=$iron_striped;
+		}						
+		//echo '<h1>XXX'.$uibc_striped_last.'YYY</h1>';
+		
+		if 	(is_str_num($uibc_striped_last)!==FALSE && is_str_num($iron_striped_last)!==FALSE)	//strict zero and false may be same
+		{
+				save_single_examination_code($sample_id,'TIBC',($uibc_striped_last+$iron_striped_last));
+		}
+	}
+}
+
+
 //4->6
 //31->7, 11.14,15,23.,65,
 //7->31,11.14.23.., 15 ,65,7
 function reflex_testing($sample_id,$examination_id,$acr_code)
 {
-	if($acr_code==1||$acr_code==3||$acr_code==5){$level='less_than';}
-	elseif($acr_code==2||$acr_code==4||$acr_code==6){$level='more_than';}
+	if($acr_code==12 || $acr_code==1 || $acr_code==3 ){$level='less_than';}
+	elseif($acr_code==13 || $acr_code==2 || $acr_code==4 ){$level='more_than';}
 	else{$level='';}
 	
 	$return_value=0;
 	$sql='select * from reflex_examination where examination=\''.$examination_id.'\' and level=\''.$level.'\'';
+	//echo $sql;
 	$link=start_nchsls();
 	if(!$result=mysql_query($sql,$link)){echo mysql_error();return FALSE;}
 	while ($array=mysql_fetch_assoc($result))
@@ -1092,13 +1341,19 @@ function reflex_testing($sample_id,$examination_id,$acr_code)
 function autoverify($sample_id,$filename,$action)
 {
 	global $reflex;
-	if(get_sample_status($sample_id)=='verified'){return;}
+	if(in_array(get_sample_status($sample_id),$GLOBALS['final_stage'])){echo 'sample_id '.$sample_id.' reached verified/released state.Autoverification not done<br>'; return;}
+	//if(get_sample_status($sample_id)=='verified'){return;}
 	if(!$all_details=get_all_details_of_a_sample($sample_id)){return FALSE;}
 	$verified=0;
 	foreach ($all_details  as $key=>$value)
 	{
 		$error_code_array=array();
-		$acr_code=check_critical_abnormal_reportable($value['sample_id'],$value['code']);
+		
+		//CSF and Blood(Serum,Plasma) have no diff
+		//$acr_code=check_critical_abnormal_reportable($value['sample_id'],$value['code']);
+		$acr_code=check_critical_abnormal_reportable(	$value['sample_type'],
+														$value['code'],
+														$value['result']);
 		
 		
 		//////////empty
@@ -1113,12 +1368,20 @@ function autoverify($sample_id,$filename,$action)
 		if($acr_code==1 || $acr_code==2)
 		{			
 			insert_single_examination($value['sample_id'],1007);
-			append_if_not('Send new sample to resolve absurd values.',$sample_id,1007);
-			$error_code_array[]=$acr_code;												//1,2
+			append_if_not('Some results may be / may not be absurd. Correlate clinically and repeat sample.',$sample_id,1007);
+			
+			//$error_code_array[]=$acr_code;												//1,2
 		}
 		
-		//////////reflax if abnormal high(2,4,6)   //cholesterol=13
-		if($acr_code==2 || $acr_code==4 ||$acr_code==6||$acr_code==1 || $acr_code==3 ||$acr_code==5)
+		//////////reflax if (2,4,6,12,13)   //cholesterol=13
+		if(
+			$acr_code==12 || 
+			$acr_code==13 ||
+			$acr_code==3 ||
+			$acr_code==4 ||
+			$acr_code==1 ||
+			$acr_code==2 
+			)
 		{
 			if($value['location']=='F3N(503)' && $value['code']=='TBIL')
 			{
@@ -1147,13 +1410,22 @@ function autoverify($sample_id,$filename,$action)
 		///////////////LDL
 		if($value['code']=='CHOL')			//CHOL and CHOV go hand in hand
 		{
+			echo 'calculating LDL<br>';
 			lipid_profile($value['sample_id']);
 		}
+
+		///////////////TIBC
+		if($value['code']=='TIBC')			//CHOL and CHOV go hand in hand
+		{
+			echo 'calculating TIBC<br>';
+			tibc($value['sample_id']);
+		}
+
 
 		//////total of error to decide if verified(=0)
 		foreach($error_code_array as $error_value)
 		{
-		$verified=$verified+abs($error_value);
+			$verified=$verified+abs($error_value);
 		}
 		
 		if($action=='yes')
@@ -1187,12 +1459,12 @@ $error_code_text=array(	'-1'=>'mysql error',
 					);
 //'delete_examination'=>'delete examination',
 $error_action_text=array(
-		'1'=>'1. write result manually',																	//for blank results
-		'2'=>'2. Import result',																			//blank results
-		'3'=>'3. Write "Result awaited"',																	//for blank results
-		'5'=>'5. write "not done" and exam. rejection "NOT DONE done because sample inadequate." ',			//for blank results
+		'1'=>'1. write result manually',																//for blank results
+		'2'=>'2. Import result',																		//blank results
+		'3'=>'3. Write "Result awaited"',																//for blank results
+		'5'=>'5. write "not done" and exam. rejection "NOT DONE done because sample inadequate." ',		//for blank results
 		'6'=>'6. write "not done" and exam. rejection "NOT DONE done because lab. resources inadequate." ',	//for blank results
-		'7'=>'7. critical reporting entry'																	//for critical reporting
+		'7'=>'7. critical reporting entry'															//for critical reporting
 		);
 
 function read_action($sample_id,$code,$error_code_array,$filename)
@@ -1351,8 +1623,10 @@ $acr_check_code=array(	'-1'=>'',
 					'2'=>'high absurd',					
 					'3'=>'low critical',
 					'4'=>'high critical',
-					'5'=>'',
-					'6'=>'');
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'12'=>'low abnormal',
+					'13'=>'high abnormal');
 					
 function print_sample($sample_id,$Technician,$Doctor)
 {
@@ -1489,7 +1763,7 @@ if(mysql_num_rows($result_sample_data=mysql_query($sql_sample_data,$link))>0)
 					echo '<td>'.$examination_array['result'].'</td>';
 					echo '<td>'.$examination_array['referance_range'].' '.$examination_array['unit'].'</td>';
 					echo '<td>';
-					echo $acr_check_code[check_critical_abnormal_reportable($examination_array['sample_id'],$examination_array['code'])];
+					echo $acr_check_code[check_critical_abnormal_reportable($sample_array['sample_type'],$examination_array['code'],$examination_array['result'])];
 					echo '</td>';
 					echo '<td>'.$examination_array['method_of_analysis'].'</td>';
 					//echo '<td>'.$examination_array['details'].'</td>';
@@ -1536,8 +1810,7 @@ if(mysql_num_rows($result_sample_data=mysql_query($sql_sample_data,$link))>0)
 		
 			if($attachment_exist=='no')
 			{
-			echo '<tr><th align=center colspan=6>-----Kindly ask for S.Lithium and S.Cholinesterase-----</th></tr>';
-			echo '<tr><td align=center colspan=6>-----End of Report-----</td></tr>';	
+				echo '<tr><td align=center colspan=6>-----End of Report-----</td></tr>';	
 			}
 			echo '</table>';
 			
@@ -1726,6 +1999,7 @@ function print_single_attachment($array)
 	echo '</table>';
 	
 }
+
 function print_attachment($sample_id)
 {
 	$sql='select * from attachment where sample_id=\''.$sample_id.'\'';
@@ -1850,6 +2124,1199 @@ function manage_blob($database,$tablename,$primary_key_array,$attachment_id)
 	echo '</form>';
 }
 
+//////////////PDF functions///////////////
+
+class MYPDF_NABL extends TCPDF {
+	public $lab_name='NEW CIVIL HOSPITAL SURAT LABORATORY SERVICES';
+	public $section_name='Biochemistry Section';
+	public $section_address_phone='Near Blood Bank, 2nd Floor. Ext:317,366';
+	public $address_phone='MAJURA GATE SURAT PHONE NO.0261-2244456';
+	public $nabl_symbol='nabl.jpg';
+	public $blank_symbol='blank.jpg';
+	public $nabl_cert_no='M-0450';
+	public $blank_cert_no='';
+	public $bypass_autoverification='no';		//if 'yes'=>it will bypass autoverification
+	public $sample_id_array;
+	public $sample_id;
+	public $doctor;
+	public $login;
+	public $header_y;
+	public $completed;
+	public $sample_type='';
+	//Page header W=210 H=148
+	//210 × 297 A4
+	//$this->Write(0,$this->getPageWidth());
+	
+	
+	public function Header() 
+	{
+		
+//NCHSLS Header
+		$y_counter=15;
+
+		$this->SetFont('courier', 'B', 15);
+		$this->SetXY(10,$y_counter);
+		$this->Cell(190, $h=0, $txt=$this->lab_name, $border=0, $ln=0, $align='C', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+		$y_counter=$y_counter+5;
+		$this->SetFont('courier', '', 15);
+		$this->SetXY(10,$y_counter);
+		$this->Cell(190, $h=0, $txt=$this->address_phone, $border=0, $ln=0, $align='C', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+		//Print NABL symbol if any one is accredited
+		$linkk=start_nchsls();
+		$sql_sample_data='select * from sample where sample_id='.$this->sample_id;
+		$sql_examination_data='select * from examination where sample_id=\''.$this->sample_id.'\' order by name_of_examination';
+		$NABL_acc_counter=0;
+		$result_examination_data_for_accr=mysql_query($sql_examination_data,$linkk);
+		$this->completed='';
+		while($acc_array=mysql_fetch_assoc($result_examination_data_for_accr))
+		{
+			if($acc_array['NABL_Accredited']=='Yes')
+			{
+				$NABL_acc_counter++;
+			}
+			
+			$exp=explode("|",$acc_array['details']);
+			if(isset($exp[0]))
+			{
+				$this->completed=$exp[0];
+			}
+			
+			
+		}
+		if($NABL_acc_counter>0)
+		{
+			$image_file = $this->nabl_symbol;
+			$this->Image($image_file, 10, 10,275/12, 320/12, 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+			$this->SetFont('courier', '', 10);
+			$this->SetXY(10,36);//(Y=10+(320/12)=36)
+			$this->Cell(275/12, $h=0, $txt=$this->nabl_cert_no, $border=0, $ln=0, $align='C', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		}
+		//////////////////////////////////////////////
+		$y_counter=40;
+
+		$this->Line(10,$y_counter,200,$y_counter);
+		
+		$y_counter=$y_counter+1;
+		$this->SetFont('courier', 'B', 15);
+		$this->SetXY(10,$y_counter);
+		$this->Cell(190, $h=0, $txt=$this->section_name, $border=0, $ln=0, $align='C', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		
+		$y_counter=$y_counter+5;
+		$this->SetFont('courier', '', 15);
+		$this->SetXY(10,$y_counter);
+		$this->Cell(190, $h=0, $txt=$this->section_address_phone, $border=0, $ln=0, $align='C', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+//Biochemisty Header
+		if(mysql_num_rows($result_sample_data=mysql_query($sql_sample_data,$linkk))>0)
+		{
+			$border=0;
+			$sample_array=mysql_fetch_assoc($result_sample_data);
+
+				$this->sample_type=$sample_array['sample_type'];
+				$this->SetFont('courier', 'B', 15);
+	//1		
+				$y_counter=$y_counter+10;			
+				$this->SetXY(15,$y_counter);
+				$this->Cell(59, $h=0, $txt='Name:'.$sample_array['patient_name'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(15+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' MRD:'.$sample_array['patient_id'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(15+60+60,$y_counter);
+				$this->SetFont('courier', 'B', 15);
+				$this->Cell(59, $h=0, $txt=' Sample ID:'.$sample_array['sample_id'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+			
+	//2
+				$this->SetFont('courier', '', 10);
+				$y_counter=$y_counter+10;		
+				$this->SetXY(15,$y_counter);
+				$this->Cell(59, $h=0, $txt='Clinician: '.$sample_array['clinician'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$this->SetXY(15+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Unit:'.$sample_array['unit'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(15+60+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Location(Ext): '.$sample_array['location'], $border=0, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+	//3
+				$y_counter=$y_counter+5;		
+				$this->SetXY(15,$y_counter);
+				$this->Cell(59, $h=0, $txt='Sample Type: '.$sample_array['sample_type'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(15+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Preservative: '.$sample_array['preservative'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+						   $this->SetFont('courier', 'B', 12);
+
+				$this->SetXY(15+60+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Sample Detail: '.$sample_array['sample_details'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+	//4
+				$border=0;	
+				$y_counter=$y_counter+5;		
+				$this->SetFont('courier', '', 10);
+				$this->SetXY(15,$y_counter);
+				//$this->Cell(59, $h=0, $txt='Sex/Age: '.$sample_array['sex_age'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				$this->Cell(59, $h=0, $txt='Sex/Age: '.$sample_array['sex'].'/'.$sample_array['age'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				$this->SetFont('courier', '', 10);
+				$this->SetXY(15+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Diagnosis: '.$sample_array['diagnosis'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetFont('courier', 'B', 12);
+				$this->SetXY(15+60+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Status: '.$sample_array['status'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+
+	//5
+
+
+				$y_counter=$y_counter+5;	
+				
+				$this->SetFont('courier', '', 10);
+				$this->SetXY(15,$y_counter);
+				$this->Cell(60, $h=0, $txt='Collected: '.$sample_array['sample_collection_time'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					
+				$this->SetFont('courier', '', 10);
+				$this->SetXY(15+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Received: '.$sample_array['sample_receipt_time'], $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetFont('courier', '', 10);
+				$this->SetXY(15+60+60,$y_counter);
+				$this->Cell(59, $h=0, $txt=' Reported: '.$this->completed, $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				//$this->SetFont('courier', '', 10);
+				//$this->SetXY(15+45+45+45,$y_counter);
+				//$this->Cell(44, $h=0, $txt=' Printed: '.strftime('%Y-%m-%d %H:%M:%S'), $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		}
+		
+				$y_counter=$y_counter+5;		
+				$this->Line(10,$y_counter,200,$y_counter);
+
+				$border=1;
+				$y_counter=$y_counter+5;		
+				$this->SetFont('courier', 'B', 10);
+				$this->SetXY(10,$y_counter);
+				$this->Cell($w=10, $h=0, 'NABL Accr.',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$this->SetXY(20,$y_counter);
+				$this->Cell($w=40, $h=0, 'Examination(Test)',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(60,$y_counter);
+				$this->Cell($w=40, $h=0, 'Result',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(100,$y_counter);
+				$this->Cell($w=40, $h=0, 'Reference range',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$this->SetXY(140,$y_counter);
+				$this->Cell($w=20, $h=0,'Alert',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$this->SetXY(160,$y_counter);					
+				$this->Cell($w=40, $h=0,'Method',$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');	
+
+				$this->header_y=$y_counter;
+				$this->SetMargins(0,$y_counter+10);
+
+	}
+
+	// Page footer
+	public function Footer() 
+	{
+		$border=1;
+		$this->SetFont('courier', 'B', 10);
+		$this->SetXY(10,-10);
+		$this->Cell(95, $h=0, $txt='Examinations marked \'No\' are not NABL Accredited.', $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->SetFont('courier', '', 10);
+		$this->SetXY(105,-10);
+		$this->Cell(95, $h=0, $txt='Page:'.$this->getPageNumGroupAlias().'/'.$this->getPageGroupAlias(), $border, $ln=0, $align='R', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+		//this start at Y=127
+		//210/4=52 50-20=30,70   130,170
+		$border=1;
+		$this->SetFont('courier', '', 10);
+		$this->SetXY(10,-20);
+		//$this->Cell(95, $h=10, $txt="[Completed at: ".$this->completed."] ".$this->login."               ", $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->Cell(95, $h=10, $txt=$this->login, $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->SetXY(105,-20);
+		$this->Cell(95, $h=10, $txt=$this->doctor, $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+	}
+}
+
+
+class MYPDF_HTML extends TCPDF {
+	public $lab_name='NEW CIVIL HOSPITAL SURAT LABORATORY SERVICES';
+	public $section_name='Biochemistry Section';
+	public $section_address_phone='Near Blood Bank, 2nd Floor. Ext:317,366';
+	public $address_phone='MAJURA GATE SURAT PHONE NO.0261-2244456';
+	public $nabl_symbol='nabl.jpg';
+	public $blank_symbol='blank.jpg';
+	public $nabl_cert_no='M-0450';
+	public $blank_cert_no='';
+	public $bypass_autoverification='no';
+	public $sample_id_array;
+	public $sample_id;
+	public $doctor;
+	public $login;
+	public $header_y;
+	public $completed;
+	public $sample_type='';
+	//Page header W=210 H=148
+	//210 × 297 A4
+	//$this->Write(0,$this->getPageWidth());
+	
+	
+	public function Header() 
+	{
+		//$this->SetFont('courier', 'B', 15);
+		ob_start();
+		
+
+		//Print NABL symbol if any one is accredited
+		$linkk=start_nchsls();
+		$sql_examination_data='select * from examination where sample_id=\''.$this->sample_id.'\' order by name_of_examination';
+		$NABL_acc_counter=0;
+		$result_examination_data_for_accr=mysql_query($sql_examination_data,$linkk);
+		$this->completed='';
+		while($acc_array=mysql_fetch_assoc($result_examination_data_for_accr))
+		{
+			if($acc_array['NABL_Accredited']=='Yes')
+			{
+				$NABL_acc_counter++;
+			}		
+		}
+		if($NABL_acc_counter>0)
+		{
+			$logo_text='<img src="nabl.jpg" width="50"><br>'.$this->nabl_cert_no;
+			$logo='<td rowspan="4" border="0.3" align="center" width="10%">'.$logo_text.'</td>';
+		}
+		else
+		{
+			$logo='<td rowspan="4" border="0" align="center" width="10%"></td>';
+		}
+		$sample_data=get_sample($this->sample_id);			
+		//print_r($sample_data);
+		echo '<table border="0">';
+		echo '<tr>'.$logo.'<td width="90%" align="center"><h3>'.$this->lab_name.'</h3></td></tr>';
+		echo '<tr><td align="center"><h5>'.$this->address_phone.'</h5></td></tr>';		
+		echo '<tr><td align="center"><h5>'.$this->section_name.' '.$this->section_address_phone.'</h5></td></tr>';		
+		echo '<tr><td>
+					<table>
+						<tr>
+							<td align="left"><h3>'.$sample_data['patient_name'].' '.$sample_data['sex'].'/'.$sample_data['age'].'</h3></td>
+							<td align="left"><h3>'.$sample_data['patient_id'].'</h3></td>
+							<td align="left"><h3>Sample ID:'.$sample_data['sample_id'].'</h3></td>
+						</tr>
+						<tr>
+							<td align="left"><h5>Clinician:'.$sample_data['clinician'].'</h5></td>
+							<td align="left"><h5>Location:'.$sample_data['location'].'</h5></td>
+							<td align="left"><h5>Unit:'.$sample_data['unit'].',Diag:'.$sample_data['diagnosis'].'</h5></td>
+						</tr>
+					</table>
+				</td></tr>';		
+
+		echo '</table><br>';
+
+
+		echo '<table border="0.3">
+						<tr>
+							<td align="left" width="50%">Sample:'.$sample_data['sample_type'].','.$sample_data['sample_details'].'</td>
+							<td align="left" width="50%">Preservative:'.$sample_data['preservative'].'</td>
+						</tr>
+						<tr>
+							<td align="left">Collection:'.$sample_data['sample_collection_time'].'</td>
+							<td align="left">Receipt:'.$sample_data['sample_receipt_time'].'</td>
+						</tr>
+						<tr>							
+							<td align="left">Status:'.$sample_data['status'].' by:'.$sample_data['released_by'].'</td>
+							<td align="left">Released at: '.$sample_data['released_at'].'</td>
+						</tr>
+				</table>';
+		$myStr = ob_get_contents();
+		ob_end_clean();
+		$this->SetFont('courier', '', 10);
+		$this->SetXY(10,10);
+		$this->writeHTML($myStr, true, false, true, false, '');	
+	}
+
+	// Page footer
+	public function Footer() 
+	{
+		$border=1;
+		$this->SetFont('courier', 'B', 10);
+		$this->SetXY(10,-10);
+		$this->Cell(95, $h=0, $txt='Examinations marked \'No\' are not NABL Accredited.', $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->SetFont('courier', '', 10);
+		$this->SetXY(105,-10);
+		//$this->Cell(95, $h=0, $txt='Page:'.$this->getPageNumGroupAlias().'/'.$this->getPageGroupAlias(), $border, $ln=0, $align='R', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->Cell(95, $h=0, $txt='Page:'.$this->getAliasNumPage().'/'.$this->getAliasNbPages(), $border, $ln=0, $align='R', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		
+		//this start at Y=127
+		//210/4=52 50-20=30,70   130,170
+		$border=1;
+		$this->SetFont('courier', '', 10);
+		$this->SetXY(10,-20);
+		//$this->Cell(95, $h=10, $txt="[Completed at: ".$this->completed."] ".$this->login."               ", $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->Cell(95, $h=10, $txt=$this->login, $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+		$this->SetXY(105,-20);
+		$this->Cell(95, $h=10, $txt=$this->doctor, $border, $ln=0, $align='L', $fill=false, $link='', $stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+	}
+}
+
+
+function print_attachment_A4($pdf,$sample_id,$counter_pixell)
+{
+	$counter_pixel=$counter_pixell;
+	$sql='select * from attachment where sample_id=\''.$sample_id.'\'';
+	//echo $sql;
+	$link=start_nchsls();
+	if(!$result=mysql_query($sql,$link)){return FALSE;}
+	$number_of_attachment=mysql_num_rows($result);
+	$counter=1;
+	//SMP error
+	$y=$counter_pixel;
+	while($array=mysql_fetch_assoc($result))
+	{
+		$y=print_single_attachment_A4($pdf,$array,$counter_pixel);
+		if($counter==$number_of_attachment)
+		{
+			//echo '<tr><td align=center colspan=6>-----End of Report-----</td></tr>';
+		}
+		else
+		{
+			//echo '<h2 style="page-break-before: always;"></h2>';
+			$counter++;
+		}
+	}
+	//SMP error
+	return $y;
+}
+
+function print_single_attachment_A4($pdf,$array,$counterr)
+{
+	$counter=$counterr;
+	
+	$filetype=$array['filetype'];
+	if($filetype=='jpeg' || $filetype=='jpg' || $filetype=='gif')
+	{
+		$image_height=75;
+		if($counter+$image_height>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+		$image_file=create_file($array['file'],$array['sample_id'],$array['attachment_id'],$array['filetype']);
+		$counter=$counter+10;
+		//210,297
+		$pdf->Image($image_file, 10, $counter,100,$image_height, 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+		$counter=$counter+75;
+	}
+	elseif($filetype=='txt')
+	{
+		if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}		
+		$pdf->SetXY(20,$counter+85);
+
+		$pdf->Write(0,$array['file']);
+	}
+		return $counter;
+}
+
+
+function print_report_pdf_A4($sample_id_array,$doctor)
+{
+	$acr_check_code=array(	'-1'=>'',
+					'-2'=>'',
+					'-3'=>'',
+					'0'=>'',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal');
+	//A5=210,148
+	$attachment_exist='no';
+	$pdf = new MYPDF_NABL('P', 'mm', 'A4', true, 'UTF-8', false);
+	$pdf->sample_id_array=$sample_id_array;
+	$pdf->doctor=$doctor;
+	$pdf->login=$_SESSION['login'];
+	//$pdf->SetHeaderMargin(30);
+	//$pdf->SetFooterMargin(30);
+	// set default monospaced font
+	//$pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+	//set margins
+	//$pdf->SetMargins(10, 100);
+	//set auto page breaks
+
+	//$pdf->SetAutoPageBreak(TRUE, 30);
+
+	//set image scale factor
+	//$pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+	//$pdf->SetFont('times', '', 10);
+	$pdf->SetFont('courier', '', 8);
+	
+	//$pdf->completed='';
+	foreach($sample_id_array as $value)
+	{
+		$pdf->sample_id=$value;
+		$pdf->startPageGroup();
+		$pdf->AddPage();
+		
+		$linkk=start_nchsls();
+		$sql_examination_data='select * from examination where sample_id=\''.$pdf->sample_id.'\' order by name_of_examination';
+		$result_examination_data=mysql_query($sql_examination_data,$linkk);
+		$counter=$pdf->header_y+5;
+		$pdf->SetFont('courier','',10);
+		$border=0;
+		while($examination_array=mysql_fetch_assoc($result_examination_data))
+		{
+			$counter=$counter+5;
+			if($examination_array['id']<1000)
+			{	
+				$pdf->SetFont('courier','',10);
+				$pdf->SetXY(10,$counter);
+				$pdf->Cell($w=10, $h=0, $examination_array['NABL_Accredited'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$pdf->SetXY(20,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['name_of_examination'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(60,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(100,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['referance_range'].' '.$examination_array['unit'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(140,$counter);
+				$acr=$acr_check_code[check_critical_abnormal_reportable($pdf->sample_type,$examination_array['code'],$examination_array['result'])];
+				$pdf->Cell($w=20, $h=0,$acr,$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$pdf->SetXY(160,$counter);					
+				$pdf->Cell($w=40, $h=0,$examination_array['method_of_analysis'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+				//148=120+28 297=270+27
+			}
+			else
+			{
+				if($examination_array['id']==1008){$attachment_exist='yes';}
+				$counter=$counter+2;
+				$pdf->SetFont('courier', 'B', 12);
+				$pdf->SetXY(10,$counter);
+				$pdf->Cell($w=50, $h=0, trim($examination_array['name_of_examination'],'Z_'),$border, $ln=0, $align='', $fill=false, $link='', 
+				$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				$pdf->SetFont('courier','',10);
+				$pdf->SetXY(60,$counter);
+				$pdf->Cell($w=140, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+				$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+			}
+
+		}
+		
+		if($attachment_exist=='yes')
+		{
+			//echo '<h2 style="page-break-before: always;"></h2>';
+			$y=print_attachment_A4($pdf,$pdf->sample_id,$counter);
+			$counter=$y;				
+		}
+		
+	}
+	
+	$pdf->Output('report.pdf', 'I');
+}
+
+
+function prepare_ri_str($ex_id,$sample_id)
+{
+	$link=start_nchsls();
+	$sql='select reference_interval from scope where id=\''.$ex_id.'\'';
+
+	if(!$result=mysql_query($sql,$link)){echo mysql_error(); return FALSE;}
+	$ar=mysql_fetch_assoc($result);
+	
+	//$xml=simplexml_load_string($ar['reference_interval']) or die("Error: Cannot create object");
+	$xml=simplexml_load_string($ar['reference_interval']);
+	
+	$sample_data=get_all_data_of_examination_from_ex_id($ex_id,$sample_id);
+
+	if($xml===false)
+	{
+		return false;
+	}
+	
+	if($ex_id==1)
+	{
+		glucose_serum_reference_interval($xml,$sample_data);
+		return true;
+	}
+
+	if($ex_id==8 )
+	{
+		bilirubin_serum_reference_interval($xml,$sample_data);
+		//echo $GLOBALS['ri_str'];
+
+		return true;
+	}
+	
+	if($ex_id==4 )
+	{
+		creatinine_serum_reference_interval($xml,$sample_data);
+		//echo $GLOBALS['ri_str'];
+
+		return true;
+	}
+	
+	if($ex_id==21 )
+	{
+		uric_acid_serum_reference_interval($xml,$sample_data);
+		//echo $GLOBALS['ri_str'];
+
+		return true;
+	}
+	
+}
+
+function print_report_pdf_A4_ri($sample_id_array,$doctor)
+{
+	$acr_check_code=array(	'-1'=>'',
+					'-2'=>'',
+					'-3'=>'',
+					'0'=>'',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'12'=>'low abnormal',
+					'13'=>'high abnormal'
+					);
+	//A5=210,148
+	$attachment_exist='no';
+	$pdf = new MYPDF_NABL('P', 'mm', 'A4', true, 'UTF-8', false);
+	$pdf->sample_id_array=$sample_id_array;
+	$pdf->doctor=$doctor;
+	$pdf->login=$_SESSION['login'];
+
+	//$pdf->SetFont('times', '', 10);
+	$pdf->SetFont('courier', '', 8);
+	
+	//$pdf->completed='';
+	foreach($sample_id_array as $value)
+	{
+		$pdf->sample_id=$value;
+		$pdf->startPageGroup();
+		$pdf->AddPage();
+		
+		$linkk=start_nchsls();
+		$sql_examination_data='select * from examination where sample_id=\''.$pdf->sample_id.'\' order by name_of_examination';
+		$result_examination_data=mysql_query($sql_examination_data,$linkk);
+		$counter=$pdf->header_y+5;
+		$pdf->SetFont('courier','',10);
+		$border=0;
+		while($examination_array=mysql_fetch_assoc($result_examination_data))
+		{
+			$counter=$counter+5;
+			if($examination_array['id']<1000)
+			{	
+				$pdf->SetFont('courier','',10);
+				$pdf->SetXY(10,$counter);
+				$pdf->Cell($w=10, $h=0, $examination_array['NABL_Accredited'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$pdf->SetXY(20,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['name_of_examination'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(60,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(100,$counter);
+				$pdf->Cell($w=40, $h=0, $examination_array['referance_range'].' '.$examination_array['unit'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+				$pdf->SetXY(140,$counter);
+				$acr=$acr_check_code[check_critical_abnormal_reportable($pdf->sample_type,$examination_array['code'],$examination_array['result'])];
+				$pdf->Cell($w=20, $h=0,$acr,$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				
+				$pdf->SetXY(160,$counter);					
+				$pdf->Cell($w=40, $h=0,$examination_array['method_of_analysis'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					
+				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+
+				if(prepare_ri_str($examination_array['id'],$value)===true)
+				{
+
+					//$pdf->Write(0,$GLOBALS['ri_str']);
+					if(strlen($GLOBALS['ri_str'])>0)
+					{	
+						$counter=$counter+5;
+						$pdf->SetXY(10,$counter);
+						$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+					}
+					$GLOBALS['ri_str']='';	
+				}	
+				
+				$counter=$pdf->GetY();								
+				//if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+
+			}
+			else
+			{
+				if($examination_array['id']==1008){$attachment_exist='yes';}
+				$counter=$counter+2;
+				$pdf->SetFont('courier', 'B', 12);
+				$pdf->SetXY(10,$counter);
+				$pdf->Cell($w=50, $h=0, trim($examination_array['name_of_examination'],'Z_'),$border, $ln=0, $align='', $fill=false, $link='', 
+				$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				$pdf->SetFont('courier','',10);
+				$pdf->SetXY(60,$counter);
+				$pdf->Cell($w=140, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+				$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+				if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+					
+
+			}
+			
+		
+
+		}
+		
+		if($attachment_exist=='yes')
+		{
+			//echo '<h2 style="page-break-before: always;"></h2>';
+			$y=print_attachment_A4($pdf,$pdf->sample_id,$counter);
+			$counter=$y;				
+		}
+		
+
+		
+	}
+	
+	$pdf->Output('report.pdf', 'I');
+}
+
+
+function print_report_pdf_A4_ri_last($sample_id_array,$doctor)
+{
+	$acr_check_code=array(	'-1'=>'',
+					'-2'=>'',
+					'-3'=>'',
+					'0'=>'',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'12'=>'low abnormal',
+					'13'=>'high abnormal');
+	//A5=210,148
+	$attachment_exist='no';
+	$pdf = new MYPDF_NABL('P', 'mm', 'A4', true, 'UTF-8', false);
+	$pdf->sample_id_array=$sample_id_array;
+	$pdf->doctor=$doctor;
+	$pdf->login=$_SESSION['login'];
+
+	//$pdf->SetFont('times', '', 10);
+	$pdf->SetFont('courier', '', 8);
+	
+	//$pdf->completed='';
+	foreach($sample_id_array as $value)
+	{
+		if(is_str_interger($value))
+		{
+			$pdf->sample_id=$value;
+			$pdf->startPageGroup();
+			$pdf->AddPage();
+			
+			$linkk=start_nchsls();
+			$sql_examination_data='select * from examination where sample_id=\''.$pdf->sample_id.'\' order by name_of_examination';
+			$result_examination_data=mysql_query($sql_examination_data,$linkk);
+			$counter=$pdf->header_y+5;
+			$pdf->SetFont('courier','',10);
+			$border=0;
+			while($examination_array=mysql_fetch_assoc($result_examination_data))
+			{
+				$counter=$counter+5;
+				if($examination_array['id']<1000)
+				{	
+					$pdf->SetFont('courier','',10);
+					$pdf->SetXY(10,$counter);
+					$pdf->Cell($w=10, $h=0, $examination_array['NABL_Accredited'],$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					
+					$pdf->SetXY(20,$counter);
+					$pdf->Cell($w=40, $h=0, $examination_array['name_of_examination'],$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+					$pdf->SetXY(60,$counter);
+					$pdf->Cell($w=40, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+		
+					$pdf->SetXY(100,$counter);
+
+					$pdf->Cell($w=40, $h=0, $examination_array['referance_range'].' '.$examination_array['unit'],$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+
+					$pdf->SetXY(140,$counter);
+					$acr=$acr_check_code[check_critical_abnormal_reportable($pdf->sample_type,$examination_array['code'],$examination_array['result'])];
+					$pdf->Cell($w=20, $h=0,$acr,$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					
+					$pdf->SetXY(160,$counter);					
+					$pdf->Cell($w=40, $h=0,$examination_array['method_of_analysis'],$border, $ln=0, $align='', $fill=false, $link='', 
+						$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+						
+					if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+
+
+					
+					$counter=$pdf->GetY();								
+					//if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+
+				}
+				else
+				{
+					if($examination_array['id']==1008){$attachment_exist='yes';}
+					$counter=$counter+2;
+					$pdf->SetFont('courier', 'B', 12);
+					$pdf->SetXY(10,$counter);
+					$pdf->Cell($w=50, $h=0, trim($examination_array['name_of_examination'],'Z_'),$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					$pdf->SetFont('courier','',10);
+					$pdf->SetXY(60,$counter);
+					$pdf->Cell($w=140, $h=0, $examination_array['result'],$border, $ln=0, $align='', $fill=false, $link='', 
+					$stretch=1, $ignore_min_height=false, $calign='T', $valign='M');
+					if($counter>=260){$counter=$pdf->header_y+5;$pdf->AddPage();}
+						
+
+				}
+				
+			
+
+			}
+			
+			if($attachment_exist=='yes')
+			{
+				//echo '<h2 style="page-break-before: always;"></h2>';
+				$y=print_attachment_A4($pdf,$pdf->sample_id,$counter);
+				$counter=$y;				
+			}
+			
+			$counter=$counter+5;
+			$result_examination_data=mysql_query($sql_examination_data,$linkk);
+			while($examination_array=mysql_fetch_assoc($result_examination_data))
+			{
+					if(prepare_ri_str($examination_array['id'],$value)===true)
+					{
+
+						//$pdf->Write(0,$GLOBALS['ri_str']);
+						if(strlen($GLOBALS['ri_str'])>0)
+						{	
+							$counter=$counter+5;
+							$pdf->SetXY(10,$counter);
+							$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+							$counter=$pdf->GetY();
+						}
+						$GLOBALS['ri_str']='';	
+					}	
+			}
+		}
+	}
+	
+	$pdf->Output('report.pdf', 'I');
+}
+
+
+
+
+function print_single_report_html_pdf($pdf, $sample_id,$doctor)
+{
+	if(!is_str_interger($sample_id)){return;}
+	
+	$acr_check_code=array(	'-1'=>'',
+					'-2'=>'',
+					'-3'=>'',
+					'0'=>'',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'12'=>'low abnormal',
+					'13'=>'high abnormal');
+	//A5=210,148
+	$attachment_exist='no';
+	
+	$pdf->sample_id=$sample_id;
+	$pdf->AddPage();
+		
+	$linkk=start_nchsls();
+	$sql_examination_data='select * from examination where sample_id=\''.$pdf->sample_id.'\' order by name_of_examination';
+	$result_examination_data=mysql_query($sql_examination_data,$linkk);
+	$pdf->SetFont('courier','',10);
+	$border=0;
+	
+	ob_start();
+	echo '<table border="0.1" cellpadding="1px">';
+	echo '<tr>
+				<td width="05%" border="0.3"><b>NABL</b></td>
+				<td width="20%" border="0.3"><b>Test</b></td>
+				<td width="15%" border="0.3"><b>Result</b></td>
+				<td width="15%" border="0.3"><b>Alert</b></td>
+				<td width="20%" border="0.3"><b>Reference range</b></td>
+				<td width="25%" border="0.3"><b>Method</b></td>
+			</tr>';
+	
+	
+	$attachment_exist='no';		
+	while($examination_array=mysql_fetch_assoc($result_examination_data))
+	{
+		if($examination_array['id']==1008){$attachment_exist='yes';}
+		
+		echo '<tr>';
+		echo '<td>'.$examination_array['NABL_Accredited'].'</td>';
+		echo '<td>'.$examination_array['name_of_examination'].'</td>';
+		
+		if($examination_array['id']>1000)
+		{
+			echo '<td colspan="4"><b>'.$examination_array['result'].'</b></td>';
+		}
+		else
+		{
+			$alert=check_critical_abnormal_reportable(	$examination_array['sample_type'],
+													$examination_array['code'],
+													$examination_array['result']);
+			$acr=$acr_check_code[$alert];
+			
+			if($alert==1 || $alert==2)
+			{
+				echo '<td><strike>'.$examination_array['result'].' ???</strike></td>';
+			}
+			else
+			{
+				echo '<td>'.$examination_array['result'].'</td>';
+			}
+
+			echo '<td>'.$acr_check_code[$alert].'</td>';
+			echo '<td>'.htmlentities($examination_array['referance_range']).' '.$examination_array['unit'].'</td>';
+			echo '<td>'.$examination_array['method_of_analysis'].'</td>';
+		}
+		
+		echo '</tr>';
+	}
+	echo '</table>';
+	
+			
+/*			
+			$counter=$counter+5;
+			$result_examination_data=mysql_query($sql_examination_data,$linkk);
+			while($examination_array=mysql_fetch_assoc($result_examination_data))
+			{
+					if(prepare_ri_str($examination_array['id'],$value)===true)
+					{
+
+						//$pdf->Write(0,$GLOBALS['ri_str']);
+						if(strlen($GLOBALS['ri_str'])>0)
+						{	
+							$counter=$counter+5;
+							$pdf->SetXY(10,$counter);
+							$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+							$counter=$pdf->GetY();
+						}
+						$GLOBALS['ri_str']='';	
+
+*/	
+	$myStr = ob_get_contents();
+	ob_end_clean();	
+	$pdf->writeHTML($myStr, true, false, false, false, '');
+
+	if($attachment_exist=='yes')
+	{
+		//echo '<h2 style="page-break-before: always;">xxxx</h2>';
+		print_attachment_A4_html($pdf,$pdf->sample_id);
+	}	
+
+	//echo $myStr;exit(0);	
+}
+
+
+function print_attachment_A4_html($pdf,$sample_id)
+{
+	$sql='select * from attachment where sample_id=\''.$sample_id.'\'';
+	//echo $sql;
+	$link=start_nchsls();
+	if(!$result=mysql_query($sql,$link)){return FALSE;}
+	while($array=mysql_fetch_assoc($result))
+	{
+		//echo 'd';
+		print_single_attachment_A4_html($pdf,$array);
+	}
+}
+
+function print_single_attachment_A4_html($pdf,$array)
+{
+	$filetype=$array['filetype'];
+	if($filetype=='jpeg' || $filetype=='jpg' || $filetype=='gif')
+	{
+		//$image_file=create_file($array['file'],$array['sample_id'],$array['attachment_id'],$array['filetype']);
+		//$encoded_image='data:image/png;base64,'.base64_encode($array['file']);
+		//return '<img src="'.$encoded_image.'" >';
+		
+		$y=$pdf->GetY();
+
+	/**
+	 * Puts an image in the page.
+	 * The upper-left corner must be given.
+	 * The dimensions can be specified in different ways:<ul>
+	 * <li>explicit width and height (expressed in user unit)</li>
+	 * <li>one explicit dimension, the other being calculated automatically in order to keep the original proportions</li>
+	 * <li>no explicit dimension, in which case the image is put at 72 dpi</li></ul>
+	 * Supported formats are JPEG and PNG images whitout GD library and all images supported by GD: GD, GD2, GD2PART, GIF, JPEG, PNG, BMP, XBM, XPM;
+	 * The format can be specified explicitly or inferred from the file extension.<br />
+	 * It is possible to put a link on the image.<br />
+	 * Remark: if an image is used several times, only one copy will be embedded in the file.<br />
+	 * @param $file (string) Name of the file containing the image or a '@' character followed by the image data string. To link an image without embedding it on the document, set an asterisk character before the URL (i.e.: '*http://www.example.com/image.jpg').
+	 * @param $x (float) Abscissa of the upper-left corner (LTR) or upper-right corner (RTL).
+	 * @param $y (float) Ordinate of the upper-left corner (LTR) or upper-right corner (RTL).
+	 * @param $w (float) Width of the image in the page. If not specified or equal to zero, it is automatically calculated.
+	 * @param $h (float) Height of the image in the page. If not specified or equal to zero, it is automatically calculated.
+	 * @param $type (string) Image format. Possible values are (case insensitive): JPEG and PNG (whitout GD library) and all images supported by GD: GD, GD2, GD2PART, GIF, JPEG, PNG, BMP, XBM, XPM;. If not specified, the type is inferred from the file extension.
+	 * @param $link (mixed) URL or identifier returned by AddLink().
+	 * @param $align (string) Indicates the alignment of the pointer next to image insertion relative to image height. The value can be:<ul><li>T: top-right for LTR or top-left for RTL</li><li>M: middle-right for LTR or middle-left for RTL</li><li>B: bottom-right for LTR or bottom-left for RTL</li><li>N: next line</li></ul>
+	 * @param $resize (mixed) If true resize (reduce) the image to fit $w and $h (requires GD or ImageMagick library); if false do not resize; if 2 force resize in all cases (upscaling and downscaling).
+	 * @param $dpi (int) dot-per-inch resolution used on resize
+	 * @param $palign (string) Allows to center or align the image on the current line. Possible values are:<ul><li>L : left align</li><li>C : center</li><li>R : right align</li><li>'' : empty string : left for LTR or right for RTL</li></ul>
+	 * @param $ismask (boolean) true if this image is a mask, false otherwise
+	 * @param $imgmask (mixed) image object returned by this function or false
+	 * @param $border (mixed) Indicates if borders must be drawn around the cell. The value can be a number:<ul><li>0: no border (default)</li><li>1: frame</li></ul> or a string containing some or all of the following characters (in any order):<ul><li>L: left</li><li>T: top</li><li>R: right</li><li>B: bottom</li></ul> or an array of line styles for each border group - for example: array('LTRB' => array('width' => 2, 'cap' => 'butt', 'join' => 'miter', 'dash' => 0, 'color' => array(0, 0, 0)))
+	 * @param $fitbox (mixed) If not false scale image dimensions proportionally to fit within the ($w, $h) box. $fitbox can be true or a 2 characters string indicating the image alignment inside the box. The first character indicate the horizontal alignment (L = left, C = center, R = right) the second character indicate the vertical algnment (T = top, M = middle, B = bottom).
+	 * @param $hidden (boolean) If true do not display the image.
+	 * @param $fitonpage (boolean) If true the image is resized to not exceed page dimensions.
+	 * @param $alt (boolean) If true the image will be added as alternative and not directly printed (the ID of the image will be returned).
+	 * @param $altimgs (array) Array of alternate images IDs. Each alternative image must be an array with two values: an integer representing the image ID (the value returned by the Image method) and a boolean value to indicate if the image is the default for printing.
+	 * @return image information
+	 * @public
+	 * @since 1.1
+	 * */		
+		//$pdf->Image($image_file, 10, $y,100,100, 'JPG', '', 'T', false, 300, '', false, false, 0, false, false, false);
+		$pdf->Image('@'.$array['file'], 10, $y,100,100, 'JEPG', '', 'N', false, 300, '', false, false, 0, false, false, false);
+	}
+	
+	elseif($filetype=='txt')
+	{
+		
+		$pdf->Write(0,$array['file']);
+	}
+}
+
+
+
+
+
+
+
+function print_single_report_realhtml($sample_id,$doctor)
+{
+	if(!is_str_interger($sample_id)){return;}
+
+	sample_header_realhtml($sample_id);
+	
+	$acr_check_code=array(	'-1'=>'',
+					'-2'=>'',
+					'-3'=>'',
+					'0'=>'',
+					'1'=>'low absurd',
+					'2'=>'high absurd',					
+					'3'=>'low critical',
+					'4'=>'high critical',
+					'5'=>'low abnormal',
+					'6'=>'high abnormal',
+					'12'=>'low abnormal',
+					'13'=>'high abnormal');
+	//A5=210,148
+	$attachment_exist='no';
+	
+		
+	$linkk=start_nchsls();
+	
+	
+	
+	
+	
+	
+	$sql_examination_data='select * from examination where sample_id=\''.$sample_id.'\' order by name_of_examination';
+	$result_examination_data=mysql_query($sql_examination_data,$linkk);
+	$border=0;
+	
+	ob_start();
+	echo '<table border="1" cellpadding="1px">';
+	echo '<tr>
+				<td width="05%" border="0.3"><b>NABL</b></td>
+				<td width="20%" border="0.3"><b>Test</b></td>
+				<td width="15%" border="0.3"><b>Result</b></td>
+				<td width="15%" border="0.3"><b>Alert</b></td>
+				<td width="20%" border="0.3"><b>Reference range</b></td>
+				<td width="25%" border="0.3"><b>Method</b></td>
+			</tr>';
+	
+	
+	$attachment_exist='no';		
+	while($examination_array=mysql_fetch_assoc($result_examination_data))
+	{
+		if($examination_array['id']==1008){$attachment_exist='yes';}
+		
+		echo '<tr>';
+		echo '<td>'.$examination_array['NABL_Accredited'].'</td>';
+		echo '<td>'.$examination_array['name_of_examination'].'</td>';
+		
+		if($examination_array['id']>1000)
+		{
+			echo '<td colspan="4"><b>'.$examination_array['result'].'</b></td>';
+		}
+		else
+		{
+			echo '<td>'.$examination_array['result'].'</td>';
+			$alert=check_critical_abnormal_reportable(	$examination_array['sample_type'],
+													$examination_array['code'],
+													$examination_array['result']);
+			$acr=$acr_check_code[$alert];
+			echo '<td>'.$acr_check_code[$alert].'</td>';
+			echo '<td>'.htmlentities($examination_array['referance_range']).' '.$examination_array['unit'].'</td>';
+			echo '<td>'.$examination_array['method_of_analysis'].'</td>';
+		}
+		
+		echo '</tr>';
+	}
+	echo '</table>';
+	
+			
+/*			
+			$counter=$counter+5;
+			$result_examination_data=mysql_query($sql_examination_data,$linkk);
+			while($examination_array=mysql_fetch_assoc($result_examination_data))
+			{
+					if(prepare_ri_str($examination_array['id'],$value)===true)
+					{
+
+						//$pdf->Write(0,$GLOBALS['ri_str']);
+						if(strlen($GLOBALS['ri_str'])>0)
+						{	
+							$counter=$counter+5;
+							$pdf->SetXY(10,$counter);
+							$pdf->writeHTML($GLOBALS['ri_str'], true, false, false, false, '');
+							$counter=$pdf->GetY();
+						}
+						$GLOBALS['ri_str']='';	
+
+*/	
+	$myStr = ob_get_contents();
+	ob_end_clean();	
+	echo $myStr;
+	//$pdf->writeHTML($myStr, true, false, false, false, '');
+
+	if($attachment_exist=='yes')
+	{
+		//echo '<h2 style="page-break-before: always;">xxxx</h2>';
+		print_attachment_A4_realhtml($sample_id);
+	}	
+
+	//echo $myStr;exit(0);	
+}
+
+
+function print_attachment_A4_realhtml($sample_id)
+{
+	$sql='select * from attachment where sample_id=\''.$sample_id.'\'';
+	//echo $sql;
+	$link=start_nchsls();
+	if(!$result=mysql_query($sql,$link)){return FALSE;}
+	while($array=mysql_fetch_assoc($result))
+	{
+		//echo 'd';
+		print_single_attachment_A4_realhtml($array);
+	}
+}
+
+function print_single_attachment_A4_realhtml($array)
+{
+	$filetype=$array['filetype'];
+	if($filetype=='jpeg' || $filetype=='jpg' || $filetype=='gif')
+	{
+		$encoded_image='data:image/png;base64,'.base64_encode($array['file']);
+		echo '<img src="'.$encoded_image.'" >';
+	}
+	
+	elseif($filetype=='txt')
+	{
+		echo '<pre>'.$array['file'].'</pre>';
+	}
+}
+
+
+
+
+
+	function sample_header_realhtml($sample_id) 
+	{
+		ob_start();
+
+		$linkk=start_nchsls();
+		$sample_data=get_sample($sample_id);	
+		if($sample_data['status']=='released'){$class='message';}else{$class='warning';}		
+		//print_r($sample_data);
+		echo '<table border="1">';
+		echo '<tr><td>
+					<table>
+						<tr>
+							<td align="left"><h3>'.$sample_data['patient_name'].' '.$sample_data['sex'].'/'.$sample_data['age'].'</h3></td>
+							<td align="left"><h3>'.$sample_data['patient_id'].'</h3></td>
+							<td align="left"><h3>Sample ID:'.$sample_data['sample_id'].'</h3></td>
+						</tr>
+						<tr>
+							<td align="left"><h5>Clinician:'.$sample_data['clinician'].'</h5></td>
+							<td align="left"><h5>Location:'.$sample_data['location'].'</h5></td>
+							<td align="left"><h5>Unit:'.$sample_data['unit'].',Diag:'.$sample_data['diagnosis'].'</h5></td>
+						</tr>
+					</table>
+				</td></tr>';		
+
+		echo '</table><br>';
+
+
+		echo '<table border="1">
+						<tr>
+							<td align="left" width="50%">Sample:'.$sample_data['sample_type'].','.$sample_data['sample_details'].'</td>
+							<td align="left" width="50%">Preservative:'.$sample_data['preservative'].'</td>
+						</tr>
+						<tr>
+							<td align="left">Collection:'.$sample_data['sample_collection_time'].'</td>
+							<td align="left">Receipt:'.$sample_data['sample_receipt_time'].'</td>
+						</tr>
+						<tr>							
+							<td align="left"><span class=message>Status:</span><span id=cur_status class=\''.$class.'\' >'.$sample_data['status'].'</span> by:'.$sample_data['released_by'].'</td>
+							<td align="left">Released at: '.$sample_data['released_at'].'</td>
+						</tr>
+				</table>';
+		$myStr = ob_get_contents();
+		ob_end_clean();
+		echo $myStr;
+	}
 
 
 ?>

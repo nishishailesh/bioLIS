@@ -14,11 +14,11 @@ if(!login_varify())
 	exit();
 }
 main_menu();
-if($_SESSION['login']!='root')
-{
-	echo '<h3>You are not allowed to use this menu item!</h3>';
-	exit();
-}
+//if($_SESSION['login']!='root')
+//{
+//	echo '<h3>You are not allowed to use this menu item!</h3>';
+//	exit();
+//}
 
 
 if(isset($_POST['submit']))
@@ -92,8 +92,8 @@ else
 {
 	echo '<form method=post><table>
 	<th colspan=2>Monthly change of sample_id</th>
-	<tr><td>Year</td><td><input type=text name=year></td></tr>
-	<tr><td>Month</td><td><input type=text name=month></td></tr>
+	<tr><td>Year</td><td><input placeholder="YY(Only two Digits)" type=text name=year></td></tr>
+	<tr><td>Month</td><td><input placeholder=MM type=text name=month></td></tr>
 	<tr><td><input type=submit name=submit value=make_sql></td></tr>
 	</table></form>';
 }

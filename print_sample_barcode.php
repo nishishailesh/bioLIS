@@ -153,7 +153,8 @@ foreach($sample_id_list as $key=>$value)
 	}
 }
 
-$filename=str_replace("|","-",$_POST['list_of_samples']).'.pdf';
+//$filename=str_replace("|","-",$_POST['list_of_samples']).'.pdff';
+$filename='barcode.pdf';
 $pdf->Output($filename, 'I');
 
 

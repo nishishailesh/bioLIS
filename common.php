@@ -6,7 +6,7 @@ require_once('reference_interval.php');
 // calibration, EQC,Kit,checklist
 
 /////////donot do anything above/////////
-$reflex='no';
+$reflex='yes';
 /////////do not do anything below////////
 
 //$GLOBALS['final_stage']=array('verified','released');
@@ -251,6 +251,7 @@ function main_menu()
 				<li><a href=new_request.php>New</a>
 				<li><a href=new_request_FS.php>New Copy[F-S]</a>
 				<li><a href=release.php>Release</a>
+				<li><a href=release_and_email.php>Release+Email</a>
 
 			</ul>
 	

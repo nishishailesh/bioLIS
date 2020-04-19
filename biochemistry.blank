@@ -117,7 +117,7 @@ CREATE TABLE `calibration` (
   `file_attached` longblob NOT NULL,
   `file_attached_name` varchar(500) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4713 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4742 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -347,7 +347,7 @@ CREATE TABLE `equipment_record` (
   PRIMARY KEY (`id`),
   KEY `equipment` (`equipment`),
   KEY `dd` (`equipment_record_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=1275 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1292 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -685,7 +685,7 @@ CREATE TABLE `reagent` (
   `doo` date NOT NULL,
   `detail` varchar(500) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2089852 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2089993 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -772,13 +772,13 @@ CREATE TABLE `reflex_examination` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `reflex_examination_ori`
+-- Table structure for table `reflex_examination.limited`
 --
 
-DROP TABLE IF EXISTS `reflex_examination_ori`;
+DROP TABLE IF EXISTS `reflex_examination.limited`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `reflex_examination_ori` (
+CREATE TABLE `reflex_examination.limited` (
   `examination` int(11) NOT NULL,
   `reflex` int(11) NOT NULL,
   `level` varchar(15) NOT NULL,
@@ -836,7 +836,7 @@ CREATE TABLE `reminder` (
   `checked_at` datetime NOT NULL,
   `complated` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=76443 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=78066 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -990,7 +990,7 @@ CREATE TABLE `schedule` (
   `authority` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=418 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=419 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1171,4 +1171,4 @@ CREATE TABLE `view_data` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-03-03 23:43:45
+-- Dump completed on 2020-04-19 12:33:51

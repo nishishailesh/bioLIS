@@ -1,8 +1,7 @@
 #!/bin/bash
-cp /var/www/html/* . -f
-cp /var/www/html/date . -Rf
-cp /var/www/html/docs . -Rf
-cp /var/www/html/tcpdf . -Rf
+#cp /var/www/html/* . -f
+#cp /var/www/html/date . -Rf
+#cp /var/www/html/tcpdf . -Rf
 
 echo "Give mysql password"
 read password
